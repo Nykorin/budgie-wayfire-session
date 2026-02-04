@@ -2,7 +2,7 @@ python = import('python').find_installation('python3')
 
 prefix = get_option('prefix')
 
-libexecdir = join_paths(prefix, 'libexec', 'budgie-desktop')
+libexecdir = join_paths(prefix, 'lib', 'budgie-desktop')
 bindir    = join_paths(prefix, 'bin')
 datadir   = join_paths(prefix, 'share')
 

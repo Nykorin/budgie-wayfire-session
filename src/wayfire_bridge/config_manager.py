@@ -157,7 +157,7 @@ class ConfigManager:
                 'dbus-update-activation-environment --systemd WAYLAND_DISPLAY DISPLAY XAUTHORITY',
             )
             autostart.setdefault('autostart_wf_shell', 'false')
-            autostart.setdefault('portal', '/usr/libexec/xdg-desktop-portal')
+            autostart.setdefault('portal', '/usr/lib/xdg-desktop-portal')
             autostart.setdefault('desktop', 'budgie-desktop')
 
             log.debug("Autostart section configured for budgie-desktop")

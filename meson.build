@@ -6,6 +6,6 @@ project(
 
 python = import('python').find_installation('python3')
 
-libexecdir = join_paths(get_option('prefix'), 'libexec', 'budgie-desktop')
+libexecdir = join_paths(get_option('prefix'), 'lib', 'budgie-desktop')
 
 subdir('src')
