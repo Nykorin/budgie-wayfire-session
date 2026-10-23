@@ -33,7 +33,8 @@ from wayfire_bridge.config_manager import ConfigManager  # noqa: E402
 # The bridge's warnings (e.g. "none of [...] is installed") are expected here
 logging.getLogger('wayfire_bridge').setLevel(logging.CRITICAL)
 
-METADATA_DIR = Path('/usr/share/wayfire/metadata')
+# WAYFIRE_METADATA_DIR checks against another Wayfire build's options
+METADATA_DIR = Path(os.environ.get('WAYFIRE_METADATA_DIR') or '/usr/share/wayfire/metadata')
 
 BRIDGE_SCHEMAS = (
     'org.gnome.desktop.wm.keybindings',

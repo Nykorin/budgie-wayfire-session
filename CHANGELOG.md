@@ -9,6 +9,7 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 ## [2026-10-23]
 
 ### Added
+- **tests/helpers.py, README.md:** `WAYFIRE_METADATA_DIR` points the tests at another Wayfire build's `share/wayfire/metadata` instead of the installed one, so a patched or newer build can be checked before it is installed *(Claude, directed by user)*
 - **tests/test_launcher.py:** The launcher calls `pgrep` and `pidwait` with `-u` and the user's id, and still finds the user's own `budgie-session-binary`. Its runtime directory check, run on real directories: a missing one is created with mode 700 and a private one is used, while a world- or group-accessible one, a symlink, a file, and a `/tmp` fallback another user made first are all refused *(Claude, directed by user)*
 - **tests/test_entry_point.py:** The single-instance lock: kept in the runtime directory, else under `~/.cache/budgie-wayfire/` with mode 700 and never in `/tmp`; a second bridge is refused while the first holds it; the bridge runs on with a warning when the lock can't be created, and exits when another bridge holds it *(Claude, directed by user)*
 - **README.md:** The Tests section mentions these *(Claude, directed by user)*
