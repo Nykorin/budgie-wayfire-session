@@ -131,8 +131,18 @@ if [ -n "$XDG_VTNR" ] && [ -f "/sys/devices/virtual/tty/tty0/active" ]; then
     done
 fi
 
+# Log wayfire's output, and everything it autostarts (budgie-desktop, the
+# bridge), so rejected options and plugins that fail to load are readable
+# after the fact. The previous session's log is kept as wayfire.log.old.
+WAYFIRE_LOG_DIR="${XDG_STATE_HOME:-${HOME}/.local/state}/budgie-wayfire"
+WAYFIRE_LOG="${WAYFIRE_LOG_DIR}/wayfire.log"
+mkdir -p "${WAYFIRE_LOG_DIR}"
+if [ -f "${WAYFIRE_LOG}" ]; then
+    mv -f "${WAYFIRE_LOG}" "${WAYFIRE_LOG}.old"
+fi
+
 # Start wayfire in the background
-wayfire --config "$WAYFIRE_CONFIG_FILE" &
+wayfire --config "$WAYFIRE_CONFIG_FILE" >"${WAYFIRE_LOG}" 2>&1 &
 WAYFIRE_PID=$!
 
 # Small additional delay to ensure wayfire is fully initialized
