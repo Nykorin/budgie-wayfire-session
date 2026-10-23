@@ -927,6 +927,13 @@ class WayfireBridge:
             self.config_manager.set_value('core', 'vheight', vheight)
         self.config_manager.remove_option('vswitch', 'vwidth')
         self.config_manager.remove_option('vswitch', 'vheight')
+        # [command] entries from older shipped configs: key-first bindings and
+        # commands that don't exist ("wm-actions close", "vswitch-move left")
+        for name in ('close', 'maximize', 'minimize', 'move_left', 'move_right'):
+            command = self.config_manager.get_value('command', f'command_{name}') or ''
+            if command.startswith(('wm-actions ', 'vswitch-move ')):
+                self.config_manager.remove_option('command', f'binding_{name}')
+                self.config_manager.remove_option('command', f'command_{name}')
         # Old vswitch names: binding_win_* doesn't exist and binding_0 was an
         # off-by-one (workspaces are numbered from 1)
         if 'vswitch' in self.config_manager.config:
