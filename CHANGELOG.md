@@ -23,6 +23,7 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 - **src/wayfire_bridge/mappings.py, src/wayfire.ini:** Syncing night light to a `[gamma]` section: no Wayfire plugin reads it, so it never did anything *(Claude, directed by user)*
 
 ### Fixed
+- **src/wayfire_bridge/mappings.py, src/wayfire_bridge/transforms.py:** GNOME's `custom` mouse and touchpad acceleration profile was passed through, which Wayfire rejects (it accepts `default`, `none`, `adaptive`, `flat`); it falls back to `default` *(Claude)*
 - **src/wayfire_bridge/mappings.py:** Mouse natural scroll was written to `natural_scroll`, the touchpad's option, so it flipped the touchpad; it is `mouse_natural_scroll`, and touchpad natural scroll (written to the nonexistent `touchpad_natural_scroll`) is `natural_scroll` *(Claude)*
 - **src/wayfire_bridge/mappings.py, src/wayfire_bridge/transforms.py:** Touchpad disable-while-typing, left-handed and send-events went to options Wayfire doesn't have: they are `disable_touchpad_while_typing`, the shared `left_handed_mode`, and `disable_touchpad_while_mouse` (true for disabled-on-external-mouse) *(Claude)*
 - **src/wayfire_bridge/transforms.py:** Touchpad click methods `fingers` and `areas` were passed through, which Wayfire rejects; they are `clickfinger` and `button-areas` *(Claude)*

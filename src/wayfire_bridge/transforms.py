@@ -96,6 +96,16 @@ class TransformFunctions:
         return 'true' if value == 'disabled-on-external-mouse' else 'false'
 
     @staticmethod
+    def accel_profile(value: str) -> str:
+        """Transform a pointer accel-profile to Wayfire
+
+        GNOME: default, flat, adaptive, custom
+        Wayfire: default, none, adaptive, flat (no custom curves, so 'custom'
+        falls back to libinput's default)
+        """
+        return value if value in ('default', 'flat', 'adaptive') else 'default'
+
+    @staticmethod
     def click_method(value: str) -> str:
         """Transform touchpad click-method to Wayfire names
 

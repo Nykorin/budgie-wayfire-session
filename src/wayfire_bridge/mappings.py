@@ -312,7 +312,7 @@ GSETTINGS_MAPPINGS = {
     ('org.gnome.desktop.peripherals.mouse', 'accel-profile'): {
         'section': 'input',
         'option': 'mouse_accel_profile',
-        'transform': 'str'
+        'transform': 'accel_profile'
     },
     ('org.gnome.desktop.peripherals.mouse', 'speed'): {
         'section': 'input',
@@ -351,7 +351,7 @@ GSETTINGS_MAPPINGS = {
     ('org.gnome.desktop.peripherals.touchpad', 'accel-profile'): {
         'section': 'input',
         'option': 'touchpad_accel_profile',   # different key from mouse_accel_profile
-        'transform': 'str'
+        'transform': 'accel_profile'
     },
 
     # ==========================================================================
