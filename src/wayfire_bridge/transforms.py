@@ -162,7 +162,9 @@ class TransformFunctions:
         key = key.strip('<>')
 
         if key:
-            # Handle special key names and XF86 hardware keys
+            # Handle special key names and XF86 hardware keys. Values must be
+            # the canonical evdev name: Wayfire resolves them with libevdev,
+            # which rejects kernel aliases (KEY_SCREENLOCK, KEY_DASHBOARD)
             key_map = {
                 # Standard keys
                 'Return': 'ENTER',
@@ -180,6 +182,14 @@ class TransformFunctions:
                 'Num_Lock': 'NUMLOCK',
                 'Scroll_Lock': 'SCROLLLOCK',
                 'Menu': 'COMPOSE',
+                'Shift_L': 'LEFTSHIFT',
+                'Shift_R': 'RIGHTSHIFT',
+                'Control_L': 'LEFTCTRL',
+                'Control_R': 'RIGHTCTRL',
+                'Alt_L': 'LEFTALT',
+                'Alt_R': 'RIGHTALT',
+                'Super_L': 'LEFTMETA',
+                'Super_R': 'RIGHTMETA',
 
                 # Punctuation keysyms whose evdev names differ
                 'period': 'DOT',
@@ -233,7 +243,7 @@ class TransformFunctions:
                 'XF86Tools': 'CONFIG',
                 'XF86Search': 'SEARCH',
                 'XF86LaunchA': 'SCALE',
-                'XF86LaunchB': 'DASHBOARD',
+                'XF86LaunchB': 'ALL_APPLICATIONS',
                 'XF86Explorer': 'FILE',
                 'XF86Calculator': 'CALC',
                 'XF86Mail': 'MAIL',
@@ -247,7 +257,25 @@ class TransformFunctions:
                 'XF86PowerOff': 'POWER',
                 'XF86Battery': 'BATTERY',
                 'XF86Bluetooth': 'BLUETOOTH',
+                'XF86ScreenSaver': 'COFFEE',
+                'XF86Suspend': 'SUSPEND',
+                'XF86RFKill': 'RFKILL',
+                'XF86UWB': 'UWB',
+                'XF86KbdLightOnOff': 'KBDILLUMTOGGLE',
+                'XF86Keyboard': 'KEYBOARD',
+                'XF86MonBrightnessCycle': 'BRIGHTNESS_CYCLE',
+                'XF86RotateWindows': 'ROTATE_DISPLAY',
+                'XF86RotationLockToggle': 'ROTATE_LOCK_TOGGLE',
+                'XF86AudioRandomPlay': 'SHUFFLE',
+                'XF86TouchpadToggle': 'F21',
+                'XF86TouchpadOn': 'F22',
+                'XF86TouchpadOff': 'F23',
             }
+            if key not in key_map and key.startswith('XF86'):
+                # An XF86 keysym we can't place on an evdev key (some, like
+                # XF86Hibernate, have none): skip it rather than bind a
+                # KEY_ name Wayfire would reject
+                return ''
             key = key_map.get(key, key)
             # Keypad digits: KP_1 -> KP1
             if len(key) == 4 and key.startswith('KP_') and key[3].isdigit():
