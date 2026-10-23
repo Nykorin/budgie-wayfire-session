@@ -179,6 +179,21 @@ class TransformFunctions:
                 'KP_Multiply': 'KPASTERISK',
                 'KP_Divide': 'KPSLASH',
                 'KP_Decimal': 'KPDOT',
+                'KP_Equal': 'KPEQUAL',
+                # Keypad navigation keysyms share the digit keys
+                'KP_Insert': 'KP0',
+                'KP_End': 'KP1',
+                'KP_Down': 'KP2',
+                'KP_Next': 'KP3',
+                'KP_Page_Down': 'KP3',
+                'KP_Left': 'KP4',
+                'KP_Begin': 'KP5',
+                'KP_Right': 'KP6',
+                'KP_Home': 'KP7',
+                'KP_Up': 'KP8',
+                'KP_Prior': 'KP9',
+                'KP_Page_Up': 'KP9',
+                'KP_Delete': 'KPDOT',
 
                 # XF86 Hardware keys -> KEY_ equivalents
                 'XF86AudioLowerVolume': 'VOLUMEDOWN',
