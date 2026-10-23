@@ -6,7 +6,7 @@ session creation for wayfire with budgie-desktop
 
 # install and start
     git clone https://github.com/ubuntubudgie/budgie-wayfire-session
-    cd budgie-wayfire-sesson
+    cd budgie-wayfire-session
     meson build --prefix=/usr
     sudo meson install -C build
 
@@ -16,7 +16,6 @@ At the login screen, choose the budgie (wayfire) session to launch
 in the src folder
 wayfire-bridge                 # Main entry point
 wayfire_bridge/
-├── __init__.py                # Package initialization
 ├── bridge.py                  # Core bridge coordinator
 ├── config_manager.py          # Config file I/O
 ├── transforms.py              # Value transformation functions
@@ -28,7 +27,6 @@ Supported Settings
 Desktop Interface
 
 Cursor theme and size
-GTK theme
 Focus mode
 
 Input Devices (libinput)
@@ -93,18 +91,18 @@ Full create/update/delete support
 installs wayfire.ini to ~/.config/budgie-desktop/wayfire/
 
 the autostart section of wayfire.ini starts budgie by running budgie-desktop
-It also starts the bridge that is installed to /usr/libexec/budgie-desktop/budgie_wayfire_bridge.py
+It also starts the bridge that is installed to /usr/libexec/budgie-desktop/wayfire-bridge
 
 ----
 
 # debugging
 
-kill the budgie_wayfire_bridge.py
+kill the running bridge
 
-    ps -ef | grep wayfire_bridge
+    pkill -f wayfire-bridge
 
-Manually run 
+Manually run it with debug output
 
-    python3 /usr/libexec/budgie-desktop/budgie_wayfire_bridge.py
+    /usr/libexec/budgie-desktop/wayfire-bridge --verbose
 
 Note the output from the bridge to aid debugging.

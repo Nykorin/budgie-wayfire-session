@@ -34,22 +34,6 @@ class TransformFunctions:
         return value.replace(':', '').strip()
 
     @staticmethod
-    def focus_mode(value: str) -> str:
-        """Transform focus mode
-
-        Wayfire modes: click, sloppy, mouse
-        - click: focus only on click
-        - sloppy: focus follows mouse without raising
-        - mouse: focus follows mouse and raises window
-        """
-        mode_map = {
-            'click': 'click',
-            'sloppy': 'sloppy',
-            'mouse': 'mouse'
-        }
-        return mode_map.get(value, 'click')
-
-    @staticmethod
     def scroll_method(value: bool) -> str:
         """Transform two-finger scrolling to scroll method"""
         return 'two-finger' if value else 'edge'
@@ -96,12 +80,6 @@ class TransformFunctions:
         """
         # Wayfire doesn't have direct equivalent, but we can map for future use
         return value
-
-    @staticmethod
-    def num_workspaces(value: int) -> str:
-        """Transform number of workspaces to viewport grid"""
-        # Wayfire uses a 2D grid, assume horizontal layout
-        return f"{value} 1"
 
     @staticmethod
     def keybinding(value: Any) -> str:

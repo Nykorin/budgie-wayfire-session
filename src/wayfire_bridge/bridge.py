@@ -976,12 +976,6 @@ class WayfireBridge:
                     except Exception:
                         log.debug("Could not sync mouse key %s", key, exc_info=True)
 
-                # Double-click time
-                try:
-                    self._on_double_click_changed(mouse, 'double-click')
-                except Exception:
-                    log.debug("Could not sync double-click time", exc_info=True)
-
             # Sync mutter settings
             if 'org.gnome.mutter' in self.settings_objects:
                 mutter = self.settings_objects['org.gnome.mutter']
@@ -1010,14 +1004,6 @@ class WayfireBridge:
                     self._on_edge_tiling_changed(budgie_wm)
                 except Exception:
                     log.debug("Could not sync edge-tiling", exc_info=True)
-
-            # Sync placement mode
-            if 'org.gnome.mutter' in self.settings_objects:
-                mutter = self.settings_objects['org.gnome.mutter']
-                try:
-                    self._on_mutter_changed(mutter, 'center-new-windows')
-                except Exception:
-                    log.debug("Could not sync mutter center-new-windows", exc_info=True)
 
         finally:
             self.delay_config_write = False

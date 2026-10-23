@@ -13,16 +13,22 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 - **src/wayfire-bridge, src/systemd/wayfire-bridge.service:** Only one bridge runs at a time: a second one, from `[autostart]` and the systemd unit both, exits on a lock in `$XDG_RUNTIME_DIR/wayfire-bridge.lock` instead of fighting the first over `wayfire.ini`; the unit may write `%t` for it *(Claude)*
 
 ### Changed
+- **README.md:** The bridge's installed path (`/usr/libexec/budgie-desktop/wayfire-bridge`), the clone folder's name, debugging with `pkill -f wayfire-bridge` and `wayfire-bridge --verbose`, and no `__init__.py` or GTK theme in the lists *(Claude)*
+- **src/wayfire.ini:** The settings list says focus mode comes from `com.solus-project.budgie-wm` and the follow-focus plugin, not `[core] focus_mode` *(Claude)*
 - **src/wayfire_bridge/bridge.py:** On startup, configs written by older versions lose the `[notifications]` section and `[core] gtk_theme`, and `[vswitch] vwidth`/`vheight` are removed, a `vheight` set there moving to `[core]` *(Claude)*
 - **src/wayfire.ini:** The `[command]` and `[vswitch]` comments and the commented-out example bindings give Wayfire's binding format, modifiers first (`<ctrl> <alt> KEY_T`), instead of `KEY_T CTRL ALT` *(Claude, directed by user)*
 - **src/wayfire_bridge/media_keys.py:** The terminal shortcut runs the default terminal from `org.gnome.desktop.default-applications.terminal exec` (falling back to `x-terminal-emulator`), so changing the shortcut no longer resets the command the default-terminal handler wrote *(Claude)*
 
 ### Removed
+- **src/wayfire_bridge/transforms.py:** The unused `focus_mode` and `num_workspaces` transforms *(Claude)*
+- **src/wayfire_bridge/mappings.py:** A second, identical `switch-to-workspace-last` entry *(Claude)*
+- **src/wayfire_bridge/bridge.py:** A second placement-mode sync at startup, the same as the one just before it *(Claude)*
 - **src/wayfire_bridge/bridge.py:** Writing Budgie's notification position to a `[notifications]` section, which isn't a Wayfire section *(Claude)*
 - **src/wayfire_bridge/mappings.py, src/wayfire.ini:** `gtk-theme` to `[core] gtk_theme`, which isn't a Wayfire option *(Claude)*
 - **src/wayfire.ini:** The `[command]` entries for close, maximize, minimize and moving a window to the left/right workspace: their bindings put the key before the modifiers (`KEY_Q ALT`) and their commands (`wm-actions close`, `vswitch-move left`) don't exist, so they did nothing. The bridge writes the real bindings to `[core]`, `[wm-actions]` and `[vswitch]` *(Claude, directed by user)*
 
 ### Fixed
+- **src/wayfire_bridge/bridge.py:** The startup sync called `_on_double_click_changed`, which doesn't exist (the method is `_on_double_click_unsupported`); the error was hidden at debug level *(Claude)*
 - **src/startbudgiewayfire.in:** If `budgie-session-binary` hadn't started within about 10 seconds, `pidwait` returned at once and Wayfire was killed, ending a slow first login. The launcher now waits for the session for as long as Wayfire is alive, and exits if Wayfire does *(Claude)*
 - **src/startbudgiewayfire.in:** Without `pidwait` (procps older than 4) the session ended immediately; a polling loop takes its place. The config path is quoted *(Claude)*
 - **src/wayfire_bridge/bridge.py:** The Budgie menu binding said expo's `<super>` toggle had to be removed to avoid a clash, but nothing removed it. When the overlay key's binding is also one of `[expo] toggle`'s alternatives, that alternative is dropped (`disabled` if none is left) *(Claude)*

@@ -162,11 +162,6 @@ GSETTINGS_MAPPINGS = {
         'option': 'binding_down',
         'transform': 'keybinding'
     },
-    ('org.gnome.desktop.wm.keybindings', 'switch-to-workspace-last'): {
-        'section': 'vswitch',
-        'option': 'binding_last',
-        'transform': 'keybinding'
-    },
     ('org.gnome.mutter', 'center-new-windows'): {
         'section': 'place',
         'option': 'mode',
@@ -340,7 +335,7 @@ GSETTINGS_MAPPINGS = {
     ('org.gnome.desktop.peripherals.touchpad', 'tap-button-map'): {
         'section': 'input',
         'option': 'tap_button_map',
-        'transform': 'tap_button_map'   # needs a new transform — see below
+        'transform': 'tap_button_map'
     },
     ('org.gnome.desktop.peripherals.touchpad', 'accel-profile'): {
         'section': 'input',
