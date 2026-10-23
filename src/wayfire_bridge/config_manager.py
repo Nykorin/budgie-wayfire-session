@@ -139,7 +139,7 @@ class ConfigManager:
 
         Called once during bridge_config() initial sync. Covers:
         wm-actions  — minimize, maximize, fullscreen, sticky, send_to_back etc.
-        grid        — slot_l, slot_r, mouse_snap
+        grid        — slot_l, slot_c, slot_r, restore, edge snapping
         move        — enable_snap
         place       — placement mode
         switcher    — next_view, prev_view

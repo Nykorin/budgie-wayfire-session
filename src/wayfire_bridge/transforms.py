@@ -86,13 +86,27 @@ class TransformFunctions:
 
     @staticmethod
     def send_events(value: str) -> str:
-        """Transform touchpad send-events mode
+        """Transform touchpad send-events to [input] disable_touchpad_while_mouse
 
         GNOME: enabled, disabled, disabled-on-external-mouse
-        Wayfire: N/A (we handle via environment or input config if supported)
+        Wayfire only has the "disabled while a mouse is connected" switch; it
+        has no option to turn the touchpad off entirely, so 'disabled' maps
+        to false like 'enabled'.
         """
-        # Wayfire doesn't have direct equivalent, but we can map for future use
-        return value
+        return 'true' if value == 'disabled-on-external-mouse' else 'false'
+
+    @staticmethod
+    def click_method(value: str) -> str:
+        """Transform touchpad click-method to Wayfire names
+
+        GNOME: default, none, areas, fingers
+        Wayfire: default, none, button-areas, clickfinger
+        """
+        return {
+            'areas': 'button-areas',
+            'fingers': 'clickfinger',
+            'none': 'none',
+        }.get(value, 'default')
 
     @staticmethod
     def keybinding(value: Any) -> str:
@@ -317,16 +331,6 @@ class TransformFunctions:
         """
         return 'center' if value else 'cascade'
 
-    @staticmethod
-    def tap_button_map(value: str) -> str:
-        """Transform GNOME tap-button-map to Wayfire format.
-
-        GNOME values: 'default' (lrm), 'lrm' (left-right-middle), 'lmr' (left-middle-right)
-        Wayfire values: 'lrm', 'lmr'
-        """
-        if value == 'lmr':
-            return 'lmr'
-        return 'lrm'  # 'default' and 'lrm' both map to lrm
 
 def parse_options_string(options_string):
     """Parse comma-separated options into a set."""

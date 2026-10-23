@@ -306,7 +306,7 @@ GSETTINGS_MAPPINGS = {
     # ==========================================================================
     ('org.gnome.desktop.peripherals.mouse', 'natural-scroll'): {
         'section': 'input',
-        'option': 'natural_scroll',
+        'option': 'mouse_natural_scroll',
         'transform': 'bool'
     },
     ('org.gnome.desktop.peripherals.mouse', 'accel-profile'): {
@@ -319,6 +319,9 @@ GSETTINGS_MAPPINGS = {
         'option': 'mouse_cursor_speed',
         'transform': 'float'
     },
+    # left_handed_mode and middle_emulation are single options in Wayfire,
+    # shared by mouse and touchpad: the bridge turns them on if either
+    # device's setting asks for it
     ('org.gnome.desktop.peripherals.mouse', 'left-handed'): {
         'section': 'input',
         'option': 'left_handed_mode',
@@ -344,11 +347,7 @@ GSETTINGS_MAPPINGS = {
         'option': 'middle_emulation',
         'transform': 'bool'
     },
-    ('org.gnome.desktop.peripherals.touchpad', 'tap-button-map'): {
-        'section': 'input',
-        'option': 'tap_button_map',
-        'transform': 'tap_button_map'
-    },
+    # tap-button-map is not mapped: Wayfire has no tap button map option
     ('org.gnome.desktop.peripherals.touchpad', 'accel-profile'): {
         'section': 'input',
         'option': 'touchpad_accel_profile',   # different key from mouse_accel_profile
@@ -360,7 +359,7 @@ GSETTINGS_MAPPINGS = {
     # ==========================================================================
     ('org.gnome.desktop.peripherals.touchpad', 'natural-scroll'): {
         'section': 'input',
-        'option': 'touchpad_natural_scroll',
+        'option': 'natural_scroll',   # touchpad; the mouse has mouse_natural_scroll
         'transform': 'bool'
     },
     ('org.gnome.desktop.peripherals.touchpad', 'tap-to-click'): {
@@ -378,25 +377,25 @@ GSETTINGS_MAPPINGS = {
         'option': 'touchpad_cursor_speed',
         'transform': 'float'
     },
-    # Note: left-handed for touchpad handled specially due to 'mouse' option
+    # 'left'/'right'/'mouse'; 'mouse' follows the mouse's left-handed setting
     ('org.gnome.desktop.peripherals.touchpad', 'left-handed'): {
         'section': 'input',
-        'option': 'touchpad_left_handed_mode',
-        'transform': 'touchpad_left_handed'  # Special transform
+        'option': 'left_handed_mode',
+        'transform': 'touchpad_left_handed'
     },
     ('org.gnome.desktop.peripherals.touchpad', 'disable-while-typing'): {
         'section': 'input',
-        'option': 'disable_while_typing',
+        'option': 'disable_touchpad_while_typing',
         'transform': 'bool'
     },
     ('org.gnome.desktop.peripherals.touchpad', 'click-method'): {
         'section': 'input',
         'option': 'click_method',
-        'transform': 'str'
+        'transform': 'click_method'
     },
     ('org.gnome.desktop.peripherals.touchpad', 'send-events'): {
         'section': 'input',
-        'option': 'touchpad_send_events',
+        'option': 'disable_touchpad_while_mouse',
         'transform': 'send_events'
     },
 

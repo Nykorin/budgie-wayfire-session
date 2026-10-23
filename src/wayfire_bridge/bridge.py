@@ -94,18 +94,27 @@ class WayfireBridge:
         # Delay config writes when doing bulk updates
         self.delay_config_write = False
 
-        # Wayfire options fed by more than one gsettings key (e.g. Alt-Tab
-        # from both switch-applications and switch-windows). Their bindings
-        # are merged rather than letting the last key applied win.
+        # Wayfire options fed by more than one gsettings key are merged rather
+        # than letting the last key applied win:
+        # - keybindings (e.g. Alt-Tab from switch-applications and
+        #   switch-windows) combine into one "|" list
+        # - flags (left-handed, middle-click emulation are one option for
+        #   mouse and touchpad in Wayfire) are on if any source asks for it
         sources_by_target = {}
         for (schema, key), mapping in GSETTINGS_MAPPINGS.items():
-            if mapping.get('transform') != 'keybinding':
-                continue
             target = (mapping['section'], mapping['option'])
             sources_by_target.setdefault(target, []).append((schema, key))
-        self.shared_targets = {
+        shared = {
             target: sources for target, sources in sources_by_target.items()
             if len(sources) > 1
+        }
+        self.shared_targets = {
+            target: sources for target, sources in shared.items()
+            if all(GSETTINGS_MAPPINGS[s]['transform'] == 'keybinding' for s in sources)
+        }
+        self.shared_flag_targets = {
+            target: sources for target, sources in shared.items()
+            if target not in self.shared_targets
         }
 
         # Wayfire "key" options take one binding, not a "|" list
@@ -212,10 +221,6 @@ class WayfireBridge:
                     'changed::edge-scrolling-enabled',
                     self._on_scroll_method_changed
                 )
-                touchpad_settings.connect(
-                    'changed::left-handed',
-                    self._on_touchpad_left_handed_changed
-                )
                 log.debug("Touchpad monitoring enabled")
         except Exception:
             log.warning("Could not setup touchpad monitoring", exc_info=True)
@@ -224,7 +229,6 @@ class WayfireBridge:
         try:
             mouse_settings = self._get_settings('org.gnome.desktop.peripherals.mouse')
             if mouse_settings:
-                mouse_settings.connect('changed::left-handed', self._on_mouse_left_handed_changed)
                 mouse_settings.connect('changed::double-click', self._on_double_click_unsupported)
                 log.debug("Mouse monitoring enabled")
         except Exception:
@@ -300,25 +304,19 @@ class WayfireBridge:
 
         labwc maps this to <snapping><range> of 10 or 0.
 
-        In Wayfire, aero-snap is controlled by TWO settings:
-        [move] enable_snap   — master switch for edge snapping during drag
-        [grid] mouse_snap    — whether dragging to edge triggers a grid slot
-
-        Both must be toggled together to match labwc behaviour.
-        The grid plugin must also be loaded for either to work.
+        In Wayfire, [move] enable_snap switches snapping a window to a screen
+        edge while dragging it; the grid plugin does the actual tiling.
         """
         enabled = settings.get_boolean('edge-tiling')
         value = 'true' if enabled else 'false'
 
         self.config_manager.set_value('move', 'enable_snap', value)
-        self.config_manager.set_value('grid', 'mouse_snap', value)
 
         if enabled:
             self._ensure_plugin('grid')
             self._ensure_plugin('move')
-            log.info("Edge tiling enabled (move.enable_snap + grid.mouse_snap = true)")
-        else:
-            log.info("Edge tiling disabled (move.enable_snap + grid.mouse_snap = false)")
+        log.info("Edge tiling %s ([move] enable_snap = %s)",
+                 'enabled' if enabled else 'disabled', value)
 
         if not self.delay_config_write:
             self.config_manager.save()
@@ -391,57 +389,6 @@ class WayfireBridge:
                 self.config_manager.reload_wayfire()
         except Exception:
             log.exception("Error handling scroll method change")
-
-    def _on_touchpad_left_handed_changed(self, settings, key):
-        """Handle touchpad left-handed change with 'mouse' mode support"""
-        try:
-            value = settings.get_string('left-handed')
-            log.debug("Touchpad left-handed changed to: %s", value)
-
-            if value == 'left':
-                result = 'true'
-            elif value == 'right':
-                result = 'false'
-            else:  # 'mouse' - follow mouse setting
-                mouse_settings = self.settings_objects.get('org.gnome.desktop.peripherals.mouse')
-                if mouse_settings:
-                    mouse_left_handed = mouse_settings.get_boolean('left-handed')
-                    result = 'true' if mouse_left_handed else 'false'
-                    log.debug("Touchpad follows mouse left-handed: %s", result)
-                else:
-                    result = 'false'
-
-            self.config_manager.set_value('input', 'touchpad_left_handed_mode', result)
-
-            if not self.delay_config_write:
-                self.config_manager.save()
-                self.config_manager.reload_wayfire()
-        except Exception:
-            log.exception("Error handling touchpad left-handed change")
-
-    def _on_mouse_left_handed_changed(self, settings, key):
-        """When mouse left-handed changes, update touchpad if in 'mouse' mode"""
-        try:
-            touchpad_settings = self.settings_objects.get('org.gnome.desktop.peripherals.touchpad')
-            if not touchpad_settings:
-                return
-
-            touchpad_mode = touchpad_settings.get_string('left-handed')
-            if touchpad_mode != 'mouse':
-                return  # Touchpad not following mouse
-
-            mouse_left_handed = settings.get_boolean('left-handed')
-            result = 'true' if mouse_left_handed else 'false'
-
-            log.debug("Mouse left-handed changed, updating touchpad (mouse mode): %s", result)
-
-            self.config_manager.set_value('input', 'touchpad_left_handed_mode', result)
-
-            if not self.delay_config_write:
-                self.config_manager.save()
-                self.config_manager.reload_wayfire()
-        except Exception:
-            log.exception("Error handling mouse left-handed change for touchpad")
 
     def _on_mutter_changed(self, settings, key):
         """Handle mutter settings changes"""
@@ -591,15 +538,9 @@ class WayfireBridge:
                 transformed_value = self.get_merged_xkb_options()
                 log.debug("GSettings xkb_options empty, using fallback: %s", transformed_value)
 
-            # Special handling for touchpad_left_handed with 'mouse' mode
-            elif option == 'touchpad_left_handed_mode' and transformed_value == 'mouse':
-                mouse_settings = self.settings_objects.get('org.gnome.desktop.peripherals.mouse')
-                if mouse_settings:
-                    mouse_left_handed = mouse_settings.get_boolean('left-handed')
-                    transformed_value = 'true' if mouse_left_handed else 'false'
-                    log.debug("Touchpad follows mouse left-handed: %s", transformed_value)
-                else:
-                    transformed_value = 'false'
+            # Mouse and touchpad share this flag: on if either asks for it
+            elif (section, option) in self.shared_flag_targets:
+                transformed_value = self._merged_flag(section, option)
 
             log.debug(
                 "Applying %s::%s  raw=%r (%s)  transformed=%r (%s)  target=[%s] %s",
@@ -631,6 +572,21 @@ class WayfireBridge:
                 if binding and binding not in bindings:
                     bindings.append(binding)
         return ' | '.join(bindings)
+
+    def _merged_flag(self, section: str, option: str) -> str:
+        """'true' if any gsettings key targeting this flag asks for it.
+
+        Covers touchpad left-handed 'mouse' (follow the mouse) too: it
+        transforms to 'mouse', not 'true', so the mouse's value decides.
+        """
+        for schema, key in self.shared_flag_targets[(section, option)]:
+            settings = self.settings_objects.get(schema)
+            if settings is None:
+                continue
+            transform = getattr(self.transforms, GSETTINGS_MAPPINGS[(schema, key)]['transform'])
+            if transform(settings.get_value(key).unpack()) == 'true':
+                return 'true'
+        return 'false'
 
     @staticmethod
     def _pick_single_binding(value: str) -> str:
@@ -918,6 +874,18 @@ class WayfireBridge:
         # Drop entries written by older bridge versions that Wayfire ignores
         self.config_manager.remove_section('notifications')
         self.config_manager.remove_section('gamma')
+        # Options that don't exist in Wayfire, written by older versions
+        for section, option in (
+            ('input', 'tap_button_map'),
+            ('input', 'touchpad_natural_scroll'),
+            ('input', 'touchpad_left_handed_mode'),
+            ('input', 'disable_while_typing'),
+            ('input', 'touchpad_send_events'),
+            ('input', 'xkb_repeat_delay'),
+            ('input', 'xkb_repeat_rate'),
+            ('grid', 'mouse_snap'),
+        ):
+            self.config_manager.remove_option(section, option)
         self.config_manager.remove_option('core', 'gtk_theme')
         # The workspace grid lives in [core], not [vswitch]; carry vheight over
         vheight = self.config_manager.get_value('vswitch', 'vheight')
