@@ -39,6 +39,7 @@ def plugin_installed(name: str) -> bool:
 #   'command_gsetting'             (schema, key) whose value is tried first
 #   'plugin' + 'activator'         bind a plugin's own activator option instead
 #   'unsupported'                  no Wayfire equivalent, logged and unbound
+#   'repeatable'                   repeats while held (repeatable_binding_)
 # Keys without a command (help, search, accessibility toggles, ...) are left
 # out: there is nothing in Wayfire to bind them to.
 MEDIA_KEY_MAPPINGS = {
@@ -62,7 +63,7 @@ MEDIA_KEY_MAPPINGS = {
         'fallback_command': 'thunderbird',
     },
     'home': {
-        'command_name': 'launch_file_manager',
+        'command_name': 'launch_filemanager',
         'command': 'xdg-open ~',
         'fallback_command': 'nemo',
     },
@@ -89,7 +90,7 @@ MEDIA_KEY_MAPPINGS = {
         'unsupported': 'Wayfire has no magnifier zoom-out binding (use <super> + scroll with the zoom plugin)',
     },
     'screensaver': {
-        'command_name': 'lock_screen',
+        'command_name': 'session_lock',
         'command': (
             'dbus-send --type=method_call '
             '--dest=org.buddiesofbudgie.BudgieScreenlock '
@@ -102,56 +103,81 @@ MEDIA_KEY_MAPPINGS = {
         'command': 'budgie-desktop-settings',
     },
     'volume-down': {
-        'command_name': 'on_volume_down',
+        'command_name': 'volume_down',
+        'repeatable': True,
         'command': 'wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-',
     },
     'volume-mute': {
-        'command_name': 'on_volume_mute',
+        'command_name': 'volume_mute',
         'command': 'wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle',
     },
     'volume-up': {
-        'command_name': 'on_volume_up',
+        'command_name': 'volume_up',
+        'repeatable': True,
         'command': 'wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+',
     },
     'mic-mute': {
-        'command_name': 'on_mic_mute',
+        'command_name': 'volume_mic_mute',
         'command': 'wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle',
     },
     # Playback goes to the active MPRIS player (Rhythmbox, browsers, ...).
     # Like GNOME, the play key toggles play/pause.
     'play': {
-        'command_name': 'on_play',
+        'command_name': 'media_play',
         'command': 'playerctl play-pause',
     },
     'pause': {
-        'command_name': 'on_pause',
+        'command_name': 'media_pause',
         'command': 'playerctl pause',
     },
     'stop': {
-        'command_name': 'on_stop',
+        'command_name': 'media_stop',
         'command': 'playerctl stop',
     },
     'next': {
-        'command_name': 'on_next',
+        'command_name': 'media_next',
         'command': 'playerctl next',
     },
     'previous': {
-        'command_name': 'on_previous',
+        'command_name': 'media_previous',
         'command': 'playerctl previous',
     },
     'logout': {
-        'command_name': 'on_logout',
+        'command_name': 'session_logout',
         'command': 'budgie-session-quit',
     },
     'keyboard-brightness-down': {
-        'command_name': 'on_keyboard_brightness_down',
+        'command_name': 'backlight_keyboard_down',
         'command': 'budgie-brightness-helper --down',
     },
     'keyboard-brightness-up': {
-        'command_name': 'on_keyboard_brightness_up',
+        'command_name': 'backlight_keyboard_up',
         'command': 'budgie-brightness-helper --up',
     },
 }
+
+# command_name values older versions used, removed from existing configs
+OLD_COMMAND_NAMES = (
+    'launch_file_manager',
+    'lock_screen',
+    'on_volume_down',
+    'on_volume_mute',
+    'on_volume_up',
+    'on_mic_mute',
+    'on_play',
+    'on_pause',
+    'on_stop',
+    'on_next',
+    'on_previous',
+    'on_logout',
+    'on_keyboard_brightness_down',
+    'on_keyboard_brightness_up',
+)
+
+
+def binding_prefix(mapping: dict) -> str:
+    """The [command] prefix for a mapping's key: repeatable ones repeat while held."""
+    return 'repeatable_binding_' if mapping.get('repeatable') else 'binding_'
 
 
 class MediaKeysHandler:
@@ -244,9 +270,14 @@ class MediaKeysHandler:
                 self._remove_media_key_binding(mapping['command_name'])
                 return
 
-            binding_option = f"binding_{mapping['command_name']}"
-            command_option = f"command_{mapping['command_name']}"
+            name = mapping['command_name']
+            binding_option = f"{binding_prefix(mapping)}{name}"
+            command_option = f"command_{name}"
 
+            # Only one of binding_/repeatable_binding_, or the key fires twice
+            for prefix in ('binding_', 'repeatable_binding_'):
+                if f'{prefix}{name}' != binding_option:
+                    self.config_manager.remove_option('command', f'{prefix}{name}')
             self.config_manager.set_value('command', binding_option, wayfire_binding)
             self.config_manager.set_value('command', command_option, command)
 
@@ -349,6 +380,7 @@ class MediaKeysHandler:
     def _remove_media_key_binding(self, command_name: str):
         """Remove a media key binding from config"""
         self.config_manager.remove_option('command', f'binding_{command_name}')
+        self.config_manager.remove_option('command', f'repeatable_binding_{command_name}')
         self.config_manager.remove_option('command', f'command_{command_name}')
 
     def _on_media_key_changed(self, key: str, mapping: dict):

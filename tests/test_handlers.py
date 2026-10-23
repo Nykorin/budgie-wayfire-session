@@ -67,10 +67,20 @@ class MediaKeys(BridgeTestCase):
     def test_custom_shortcut_keeps_the_hardware_keys(self):
         hardware = self.static('volume-up')
         self.set(MEDIA, 'volume-up', ['<Super><Shift>F9'])
-        binding = self.option('command', 'binding_on_volume_up')
+        binding = self.option('command', 'repeatable_binding_volume_up')
         self.assertTrue(binding.startswith('<super> <shift> KEY_F9'))
         self.assertEqual(binding.count('|'), len(hardware))
-        self.assertEqual(self.option('command', 'command_on_volume_up'), 'wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+')
+        self.assertEqual(self.option('command', 'command_volume_up'), 'wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+')
+
+    def test_volume_keys_repeat_and_are_bound_once(self):
+        # A plain binding under the same name (e.g. a hand edit) would fire too
+        self.bridge.config_manager.set_value('command', 'binding_volume_up', 'KEY_VOLUMEUP')
+        self.set(MEDIA, 'volume-up', ['<Super><Shift>F9'])
+        self.assertTrue(self.option('command', 'repeatable_binding_volume_up').startswith('<super> <shift> KEY_F9'))
+        self.assertIsNone(self.option('command', 'binding_volume_up'))
+        self.set(MEDIA, 'volume-mute', ['<Super><Shift>F10'])
+        self.assertTrue(self.option('command', 'binding_volume_mute').startswith('<super> <shift> KEY_F10'))
+        self.assertIsNone(self.option('command', 'repeatable_binding_volume_mute'))
 
     def test_clearing_a_shortcut_keeps_only_the_hardware_keys(self):
         self.set(MEDIA, 'www', ['<Super><Shift>F9'])
@@ -91,8 +101,8 @@ class MediaKeys(BridgeTestCase):
 
     def test_playback_keys_use_playerctl(self):
         self.set(MEDIA, 'next', ['<Super><Shift>F8'])
-        self.assertEqual(self.option('command', 'command_on_next'), 'playerctl next')
-        self.assertTrue(self.option('command', 'binding_on_next').startswith('<super> <shift> KEY_F8'))
+        self.assertEqual(self.option('command', 'command_media_next'), 'playerctl next')
+        self.assertTrue(self.option('command', 'binding_media_next').startswith('<super> <shift> KEY_F8'))
 
     def test_terminal_uses_the_default_terminal_setting(self):
         if not self.bridge._get_settings('org.gnome.desktop.default-applications.terminal'):

@@ -35,6 +35,12 @@ command_close = wm-actions close
 binding_move_left = KEY_LEFT SHIFT LOGO
 command_move_left = vswitch-move left
 binding_mine = <super> KEY_M
+binding_on_next = KEY_NEXTSONG
+command_on_next = playerctl next
+binding_lock_screen = <super> KEY_L
+command_lock_screen = loginctl lock-session
+binding_launch_file_manager = KEY_FILE
+command_launch_file_manager = nemo
 command_mine = my-own-script
 
 [notifications]
@@ -71,6 +77,14 @@ class OldConfig(BridgeTestCase):
         self.assertFalse(config.has_option('vswitch', 'vheight'))
         self.assertIsNotNone(config.get('core', 'vheight'))
         self.assertIsNotNone(config.get('core', 'vwidth'))
+
+    def test_media_keys_under_old_names_are_removed(self):
+        config = self.config()
+        for name in ('on_next', 'lock_screen', 'launch_file_manager'):
+            with self.subTest(name):
+                self.assertFalse(config.has_option('command', f'binding_{name}'))
+                self.assertFalse(config.has_option('command', f'command_{name}'))
+        self.assertEqual(config.get('command', 'command_mine'), 'my-own-script')
 
     def test_broken_command_entries_are_removed_but_not_the_users_own(self):
         config = self.config()

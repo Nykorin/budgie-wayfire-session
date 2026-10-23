@@ -9,6 +9,7 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 ## [2026-10-23]
 
 ### Added
+- **tests/test_handlers.py, tests/test_migrations.py:** Volume keys are bound once, as repeatable, and replace a plain binding of the same name; volume mute stays a plain binding; entries under the old names are removed from an existing config while the user's own stay *(Claude, directed by user)*
 - **tests/test_handlers.py:** The browser key opens the default browser when `x-www-browser` isn't installed *(Claude, directed by user)*
 - **tests/test_transforms.py, tests/test_sync.py:** The grid for 0 to 16 workspaces, and the bridge writing it for 1, 4, 5, 6 and 9 over a hand-set `vheight`; these replace the tests for a user-set `vheight` *(Claude, directed by user)*
 - **tests/test_sync.py:** The grid for 1, 4, 5 and 6 workspaces at `vheight = 2`, an invalid `vheight`, and `vheight` in an older config's `[vswitch]` *(Claude, directed by user)*
@@ -31,6 +32,10 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 - **src/wayfire_bridge/bridge.py:** Options shared by mouse and touchpad in Wayfire (`left_handed_mode`, `middle_emulation`) are on if either device's setting asks for it (`_merged_flag`); a touchpad set to follow the mouse uses the mouse's value *(Claude)*
 
 ### Changed
+- **src/wayfire_bridge/media_keys.py:** The `[command]` entries are named by kind: `launch_filemanager`, `session_lock`, `session_logout`, `media_play`/`pause`/`stop`/`next`/`previous`, `volume_mute`, `volume_mic_mute`, `volume_up`/`down` and `backlight_keyboard_up`/`down`, instead of `launch_file_manager`, `lock_screen` and `on_*`. This matches the names the user's LXQt Wayfire config uses, so both read alike *(Claude, directed by user)*
+- **src/wayfire_bridge/media_keys.py:** Volume up and down are written as `repeatable_binding_`, so they repeat while the key is held. A plain `binding_` under the same name is removed, since Wayfire would run both and step the volume twice per press *(Claude, directed by user)*
+- **src/wayfire_bridge/bridge.py:** On startup the entries under the old names are removed; the bridge writes them again under the new ones *(Claude, directed by user)*
+- **src/wayfire.ini:** The commented examples and the settings list use the new names *(Claude, directed by user)*
 - **README.md:** Say how the browser is picked, and that xdg-utils also serves the browser key *(Claude, directed by user)*
 - **src/wayfire_bridge/bridge.py, src/wayfire_bridge/transforms.py, src/wayfire_bridge/mappings.py:** Budgie's workspace count sets both `vwidth` and `vheight`, as the squarest grid it fills exactly (`workspace_grid`): 4 make 2x2, 6 make 3x2, 9 make 3x3, and a prime count is one row, so no grid has empty spots. `vheight` is no longer the user's to set, and one under `[vswitch]` in an older config is no longer carried over *(Claude, directed by user)*
 - **src/wayfire.ini, README.md:** Describe the grid; the shipped config starts at 2x2 *(Claude, directed by user)*
