@@ -15,6 +15,10 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 ### Removed
 - **src/wayfire_bridge/mappings.py, src/wayfire.ini:** Syncing night light to a `[gamma]` section: no Wayfire plugin reads it, so it never did anything *(Claude, directed by user)*
 
+### Fixed
+- **src/wayfire_bridge/transforms.py:** The button layout only had its `:` removed, so `appmenu:minimize,maximize,close` became `appmenuminimize,maximize,close`, which Wayfire's decorations can't read. It is now the supported buttons (minimize, maximize, close) in the user's order, space-separated (`minimize maximize close`) *(Claude, directed by user)*
+- **src/wayfire.ini:** The default `button_order` was comma-separated; it is `minimize maximize close` *(Claude, directed by user)*
+
 ---
 
 ## [2026-10-22]

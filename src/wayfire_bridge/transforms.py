@@ -30,8 +30,21 @@ class TransformFunctions:
 
     @staticmethod
     def button_layout(value: str) -> str:
-        """Transform GNOME button layout to Wayfire format"""
-        return value.replace(':', '').strip()
+        """Transform GNOME button layout to Wayfire format
+
+        GNOME: 'left,buttons:right,buttons', e.g. 'appmenu:minimize,maximize,close'
+        Wayfire: space-separated, e.g. 'minimize maximize close'
+
+        Wayfire's decorations only have minimize, maximize and close, so other
+        entries (appmenu, spacer, icon, menu) are dropped and the order kept.
+        """
+        supported = ('minimize', 'maximize', 'close')
+        buttons = []
+        for name in value.replace(':', ',').split(','):
+            name = name.strip()
+            if name in supported and name not in buttons:
+                buttons.append(name)
+        return ' '.join(buttons)
 
     @staticmethod
     def scroll_method(value: bool) -> str:
