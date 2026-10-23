@@ -32,6 +32,15 @@ if [ ! -e "${XDG_RUNTIME_DIR}" ]; then
         exit 1
     }
 fi
+# The runtime directory holds the session's sockets (Wayland, Wayfire IPC,
+# PipeWire), so the XDG spec requires it to be ours with mode 700. One that
+# isn't, such as a /tmp fallback another user created first, would let that
+# user replace those sockets: refuse it instead of starting the session
+if [ -L "${XDG_RUNTIME_DIR}" ] || [ ! -d "${XDG_RUNTIME_DIR}" ] || [ ! -O "${XDG_RUNTIME_DIR}" ] \
+        || [ "$(stat -c %a "${XDG_RUNTIME_DIR}")" != "700" ]; then
+    logger "XDG_RUNTIME_DIR ${XDG_RUNTIME_DIR} is not a directory owned by $(id -un) with mode 700, not starting"
+    exit 1
+fi
 
 # freedesktop specifications mandate that the definition
 # of XDG_SESSION_TYPE should be respected
