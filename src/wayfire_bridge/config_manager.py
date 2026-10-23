@@ -75,6 +75,7 @@ class ConfigManager:
     def _ensure_required(self):
         # Ensure critical autostart section exists for budgie-desktop
         self._ensure_autostart_section()
+        self._normalize_plugins_list()
 
     # ------------------------------------------------------------------
     # Public accessors
@@ -217,15 +218,25 @@ class ConfigManager:
         if 'core' not in self.config:
             return []
         raw = self.config['core'].get('plugins', '')
-        # Strip line continuations and split on whitespace
-        cleaned = raw.replace('\\\n', ' ')
-        return [p.strip() for p in cleaned.split() if p.strip()]
+        # Older configs spread the list over lines with "\" continuations
+        return raw.replace('\\', ' ').split()
 
     def _set_plugins_list(self, plugins: list):
-        """Write a plugins list back to [core] plugins."""
+        """Write a plugins list back to [core] plugins, on one line.
+
+        A multi-line list with backslash continuations loads in Wayfire but reaches
+        WCM with tabs between the names, so WCM shows those plugins as
+        unloaded. A plain space-separated line works for both.
+        """
         if 'core' not in self.config:
             self.config['core'] = {}
-        self.config['core']['plugins'] = ' \\\n  '.join(plugins)
+        self.config['core']['plugins'] = ' '.join(plugins)
+
+    def _normalize_plugins_list(self):
+        """Rewrite a multi-line plugins list as a single line."""
+        raw = self.get_value('core', 'plugins')
+        if raw and ('\\' in raw or '\n' in raw or '\t' in raw):
+            self._set_plugins_list(self._get_plugins_list())
 
     def ensure_plugin(self, plugin_name: str):
         """Add plugin_name to [core] plugins if not already present."""
