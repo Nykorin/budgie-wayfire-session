@@ -23,6 +23,8 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 - **src/wayfire.ini:** The `[command]` entries for close, maximize, minimize and moving a window to the left/right workspace: their bindings put the key before the modifiers (`KEY_Q ALT`) and their commands (`wm-actions close`, `vswitch-move left`) don't exist, so they did nothing. The bridge writes the real bindings to `[core]`, `[wm-actions]` and `[vswitch]` *(Claude, directed by user)*
 
 ### Fixed
+- **src/wayfire_bridge/bridge.py:** A cursor theme or size change only rewrote the environment file; `[input] cursor_theme`/`cursor_size` were set once at startup. They now follow the change *(Claude)*
+- **src/wayfire_bridge/bridge.py:** A keyboard layout change from systemd-localed (locale1) only rewrote the environment file and reloaded nothing; `[input] xkb_layout`/`xkb_options` are now updated and saved too *(Claude)*
 - **src/wayfire_bridge/mappings.py, src/wayfire.ini:** The workspace count was written to `[vswitch] vwidth`, but Wayfire reads the workspace grid (`vwidth`, `vheight`) from `[core]` *(Claude)*
 - **src/wayfire-bridge:** Logging was never set up and `-v` was never read, so `-v`/`--verbose` and `WAYFIRE_BRIDGE_VERBOSE=1` did nothing; the entry point now parses its arguments and calls `setup_logging` *(Claude)*
 - **src/systemd/wayfire-bridge.service:** `ExecStart` pointed at `/usr/bin/wayfire-bridge`, but meson installs it to `/usr/libexec/budgie-desktop/`; the `Documentation=` man page doesn't exist and is gone *(Claude)*

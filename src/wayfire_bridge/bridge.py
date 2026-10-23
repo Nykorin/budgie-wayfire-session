@@ -174,8 +174,20 @@ class WayfireBridge:
         # Update environment file
         self.write_environment_file()
 
+        # locale1 is the fallback source for [input] xkb_layout/xkb_options
+        schema = 'org.gnome.desktop.input-sources'
+        if schema in self.settings_objects:
+            for key in ('sources', 'xkb-options'):
+                mapping = GSETTINGS_MAPPINGS.get((schema, key))
+                if mapping:
+                    self._apply_setting(
+                        schema, key, mapping['section'], mapping['option'],
+                        getattr(self.transforms, mapping['transform']),
+                    )
+
         # Reload wayfire config if not delayed
         if not self.delay_config_write:
+            self.config_manager.save()
             self.config_manager.reload_wayfire()
 
     def setup_peripheral_monitoring(self):
@@ -612,9 +624,10 @@ class WayfireBridge:
             # Also write directly to wayfire.ini
             self._apply_setting(schema, key, section, option, transform)
 
-        # If cursor settings changed, regenerate environment file
+        # If cursor settings changed, regenerate environment file AND update config
         elif schema == 'org.gnome.desktop.interface' and key in ('cursor-theme', 'cursor-size'):
             self.write_environment_file()
+            self._apply_setting(schema, key, section, option, transform)
 
         else:
             self._apply_setting(schema, key, section, option, transform)
