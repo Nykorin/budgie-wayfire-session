@@ -53,15 +53,17 @@ GSETTINGS_MAPPINGS = {
         'option': 'minimize',
         'transform': 'keybinding'
     },
-    # maximize, unmaximize, toggle-maximized all map to the same toggle
+    # maximize/unmaximize are one-way actions: grid's slot_c (fill the
+    # screen) and restore. Only toggle-maximized uses the wm-actions toggle,
+    # so Super+Up isn't bound by two plugins at once.
     ('org.gnome.desktop.wm.keybindings', 'maximize'): {
-        'section': 'wm-actions',
-        'option': 'toggle_maximize',
+        'section': 'grid',
+        'option': 'slot_c',
         'transform': 'keybinding'
     },
     ('org.gnome.desktop.wm.keybindings', 'unmaximize'): {
-        'section': 'wm-actions',
-        'option': 'toggle_maximize',
+        'section': 'grid',
+        'option': 'restore',
         'transform': 'keybinding'
     },
     ('org.gnome.desktop.wm.keybindings', 'toggle-maximized'): {

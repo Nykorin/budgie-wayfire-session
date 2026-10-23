@@ -13,6 +13,7 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 - **src/wayfire-bridge, src/systemd/wayfire-bridge.service:** Only one bridge runs at a time: a second one, from `[autostart]` and the systemd unit both, exits on a lock in `$XDG_RUNTIME_DIR/wayfire-bridge.lock` instead of fighting the first over `wayfire.ini`; the unit may write `%t` for it *(Claude)*
 
 ### Changed
+- **src/wayfire_bridge/mappings.py:** `maximize` and `unmaximize` go to `[grid] slot_c` and `restore`, which fill the screen and restore it; only `toggle-maximized` uses `[wm-actions] toggle_maximize`. Merged into the toggle, Super+Up was bound by both the toggle and grid's `slot_c` default, and Super+Down maximized an unmaximized window *(Claude)*
 - **src/wayfire_bridge/media_keys.py, src/wayfire_bridge/bridge.py:** A media key's command is the first of its candidates whose program is installed: the `command_gsetting` value (for the terminal, the default terminal), then `command`, then `fallback_command`; with none installed the first is bound anyway and a warning names them. The default-terminal handler goes through the same code instead of writing the setting's value as it is *(Claude, directed by user)*
 - **src/wayfire_bridge/bridge.py:** On startup, `binding_win_*` and `binding_0` written by older versions are removed from `[vswitch]` *(Claude)*
 - **src/wayfire.ini:** The settings list names `with_win_left/right` for moving a window between workspaces (was `[command] binding_move_left/right`) *(Claude)*
