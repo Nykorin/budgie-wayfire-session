@@ -93,6 +93,20 @@ class WayfireBridge:
         # Delay config writes when doing bulk updates
         self.delay_config_write = False
 
+        # Wayfire options fed by more than one gsettings key (e.g. Alt-Tab
+        # from both switch-applications and switch-windows). Their bindings
+        # are merged rather than letting the last key applied win.
+        sources_by_target = {}
+        for (schema, key), mapping in GSETTINGS_MAPPINGS.items():
+            if mapping.get('transform') != 'keybinding':
+                continue
+            target = (mapping['section'], mapping['option'])
+            sources_by_target.setdefault(target, []).append((schema, key))
+        self.shared_targets = {
+            target: sources for target, sources in sources_by_target.items()
+            if len(sources) > 1
+        }
+
         # Initialise handlers
         self.keybindings_handler = CustomKeybindingsHandler(
             self.config_manager,
@@ -578,6 +592,10 @@ class WayfireBridge:
                 self.config_manager.set_value(section, 'xkb_variant', variant)
                 log.debug("xkb_layout=%r xkb_variant=%r", transformed_value, variant)
 
+            # Several keybinding keys share this option: merge all of them
+            elif (section, option) in self.shared_targets:
+                transformed_value = self._merged_keybinding(section, option)
+
             # Special handling for xkb_options - use fallback if empty
             elif option == 'xkb_options' and not transformed_value:
                 # GSettings is empty, use the priority system
@@ -611,6 +629,19 @@ class WayfireBridge:
 
         except Exception:
             log.exception("Error applying %s::%s", schema, key)
+
+    def _merged_keybinding(self, section: str, option: str) -> str:
+        """Combine the bindings of every gsettings key that targets one option."""
+        bindings = []
+        for schema, key in self.shared_targets[(section, option)]:
+            settings = self.settings_objects.get(schema)
+            if settings is None:
+                continue
+            value = self.transforms.keybinding(settings.get_value(key).unpack())
+            for binding in value.split(' | '):
+                if binding and binding not in bindings:
+                    bindings.append(binding)
+        return ' | '.join(bindings)
 
     def _on_setting_changed(self, schema: str, key: str, section: str,
                             option: str, transform):
