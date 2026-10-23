@@ -39,8 +39,8 @@ def plugin_installed(name: str) -> bool:
 #   'command_gsetting'             (schema, key) whose value is tried first
 #   'plugin' + 'activator'         bind a plugin's own activator option instead
 #   'unsupported'                  no Wayfire equivalent, logged and unbound
-# Keys without a command (help, search, playback, accessibility toggles, ...)
-# are left out: there is nothing in Wayfire to bind them to.
+# Keys without a command (help, search, accessibility toggles, ...) are left
+# out: there is nothing in Wayfire to bind them to.
 MEDIA_KEY_MAPPINGS = {
     'terminal': {
         'command_name': 'launch_terminal',
@@ -110,6 +110,32 @@ MEDIA_KEY_MAPPINGS = {
     'volume-up': {
         'command_name': 'on_volume_up',
         'command': 'wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+',
+    },
+    'mic-mute': {
+        'command_name': 'on_mic_mute',
+        'command': 'wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle',
+    },
+    # Playback goes to the active MPRIS player (Rhythmbox, browsers, ...).
+    # Like GNOME, the play key toggles play/pause.
+    'play': {
+        'command_name': 'on_play',
+        'command': 'playerctl play-pause',
+    },
+    'pause': {
+        'command_name': 'on_pause',
+        'command': 'playerctl pause',
+    },
+    'stop': {
+        'command_name': 'on_stop',
+        'command': 'playerctl stop',
+    },
+    'next': {
+        'command_name': 'on_next',
+        'command': 'playerctl next',
+    },
+    'previous': {
+        'command_name': 'on_previous',
+        'command': 'playerctl previous',
     },
     'logout': {
         'command_name': 'on_logout',

@@ -9,6 +9,7 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 ## [2026-10-23]
 
 ### Added
+- **src/wayfire_bridge/media_keys.py:** Play (play/pause, as in GNOME), pause, stop, next and previous through `playerctl`, which controls the active MPRIS player (Rhythmbox, browsers); mic mute through `wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle`. With the keyboard's own keys bound alongside, the media keys work without setting a shortcut *(Claude, directed by user)*
 - **src/wayfire.ini, src/wayfire_bridge/config_manager.py:** The `xdg-activation` plugin, in the default plugin list and among the plugins the bridge always loads, so existing configs get it too. Without it Wayfire ignored apps passing focus to an existing window: a link clicked in a terminal opened in the browser without raising it, and clicking a notification didn't bring its app forward *(Claude, directed by user)*
 - **src/wayfire_bridge/mappings.py:** Switch to workspace 5–12 (`binding_5`–`12`) and move a window to workspace 9–12 (`send_win_9`–`12`); a comment wrongly said numbered workspaces couldn't be mapped *(Claude)*
 - **src/wayfire_bridge/mappings.py:** Move a window one workspace up or down, following it (`with_win_up`/`down`) *(Claude)*
