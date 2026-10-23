@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 
-# Function to check if the Budgie session is running
+# Function to check if this user's Budgie session is running. Only our own
+# processes count: another user's session (fast user switching, or a process
+# merely named like it) must not keep this session's wayfire alive
 is_session_running() {
-    pgrep -f "budgie-session-binary" > /dev/null
+    pgrep -u "$(id -u)" -f "budgie-session-binary" > /dev/null
     return $?
 }
 
@@ -159,7 +161,7 @@ done
 
 # wait until the session is exited before killing wayfire
 if command -v pidwait >/dev/null 2>&1; then
-    pidwait -f budgie-session-binary
+    pidwait -u "$(id -u)" -f budgie-session-binary
 else
     while is_session_running; do
         sleep 1
