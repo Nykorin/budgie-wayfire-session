@@ -4,6 +4,7 @@ Includes: environment file, peripherals, mutter settings, panel settings
 """
 
 import os
+import shlex
 from pathlib import Path
 from typing import Dict
 import gi
@@ -810,13 +811,13 @@ class WayfireBridge:
         # Check if keyboard layout or XKB options changed
         keyboard_changed = False
         if 'XKB_DEFAULT_LAYOUT' in existing_vars:
-            if existing_vars['XKB_DEFAULT_LAYOUT'] != new_vars['XKB_DEFAULT_LAYOUT']:
+            if existing_vars['XKB_DEFAULT_LAYOUT'] != shlex.quote(new_vars['XKB_DEFAULT_LAYOUT']):
                 keyboard_changed = True
                 log.info("Keyboard layout changed: %s -> %s",
                         existing_vars['XKB_DEFAULT_LAYOUT'],
                         new_vars['XKB_DEFAULT_LAYOUT'])
         if 'XKB_DEFAULT_OPTIONS' in existing_vars:
-            if existing_vars['XKB_DEFAULT_OPTIONS'] != new_vars['XKB_DEFAULT_OPTIONS']:
+            if existing_vars['XKB_DEFAULT_OPTIONS'] != shlex.quote(new_vars['XKB_DEFAULT_OPTIONS']):
                 keyboard_changed = True
                 log.info("XKB options changed: %s -> %s",
                         existing_vars['XKB_DEFAULT_OPTIONS'],
@@ -847,7 +848,13 @@ class WayfireBridge:
         for vars_dict in [xkb_vars, cursor_vars, locale_vars]:
             if vars_dict:
                 for key in sorted(vars_dict.keys()):
-                    lines.append(f"{key}={vars_dict[key]}\n")
+                    value = vars_dict[key]
+                    # The file is sourced by a shell: quote values we
+                    # generate (e.g. cursor themes with spaces), keep user
+                    # lines exactly as written
+                    if key in new_vars:
+                        value = shlex.quote(value)
+                    lines.append(f"{key}={value}\n")
                 lines.append("\n")
 
         if other_vars:
@@ -864,8 +871,8 @@ class WayfireBridge:
         if keyboard_changed:
             log.warning(
                 "Keyboard layout or options changed. "
-                "A Wayfire RESTART is required for changes to take effect. "
-                "Run: pkill wayfire && wayfire"
+                "XWayland and newly started apps pick this up after logging "
+                "out and back in"
             )
 
     def bridge_config(self):
