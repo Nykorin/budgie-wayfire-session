@@ -202,9 +202,8 @@ class WayfireBridge:
         """Setup special monitoring for peripheral settings that need custom handling"""
         # Touchpad scroll method requires monitoring two keys
         try:
-            source = Gio.SettingsSchemaSource.get_default()
-            if source.lookup('org.gnome.desktop.peripherals.touchpad', True):
-                touchpad_settings = Gio.Settings.new('org.gnome.desktop.peripherals.touchpad')
+            touchpad_settings = self._get_settings('org.gnome.desktop.peripherals.touchpad')
+            if touchpad_settings:
                 touchpad_settings.connect(
                     'changed::two-finger-scrolling-enabled',
                     self._on_scroll_method_changed
@@ -217,22 +216,33 @@ class WayfireBridge:
                     'changed::left-handed',
                     self._on_touchpad_left_handed_changed
                 )
-                self.settings_objects['org.gnome.desktop.peripherals.touchpad'] = touchpad_settings
                 log.debug("Touchpad monitoring enabled")
         except Exception:
             log.warning("Could not setup touchpad monitoring", exc_info=True)
 
         # Mouse settings
         try:
-            source = Gio.SettingsSchemaSource.get_default()
-            if source.lookup('org.gnome.desktop.peripherals.mouse', True):
-                mouse_settings = Gio.Settings.new('org.gnome.desktop.peripherals.mouse')
+            mouse_settings = self._get_settings('org.gnome.desktop.peripherals.mouse')
+            if mouse_settings:
                 mouse_settings.connect('changed::left-handed', self._on_mouse_left_handed_changed)
                 mouse_settings.connect('changed::double-click', self._on_double_click_unsupported)
-                self.settings_objects['org.gnome.desktop.peripherals.mouse'] = mouse_settings
                 log.debug("Mouse monitoring enabled")
         except Exception:
             log.warning("Could not setup mouse monitoring", exc_info=True)
+
+    def _get_settings(self, schema: str):
+        """Return the shared Gio.Settings for a schema, creating it if needed.
+
+        Every handler must use the same object: a Gio.Settings that is no
+        longer referenced gets freed, and the change signals connected to it
+        silently stop firing.
+        """
+        if schema not in self.settings_objects:
+            source = Gio.SettingsSchemaSource.get_default()
+            if not source.lookup(schema, True):
+                return None
+            self.settings_objects[schema] = Gio.Settings.new(schema)
+        return self.settings_objects[schema]
 
     def _on_double_click_unsupported(self, settings, key):
         """Wayfire has no double-click time setting in [input].
@@ -248,11 +258,10 @@ class WayfireBridge:
         """Setup monitoring for mutter settings"""
         try:
             source = Gio.SettingsSchemaSource.get_default()
-            if source.lookup('org.gnome.mutter', True):
-                mutter_settings = Gio.Settings.new('org.gnome.mutter')
+            mutter_settings = self._get_settings('org.gnome.mutter')
+            if mutter_settings:
                 mutter_settings.connect('changed::center-new-windows', self._on_mutter_changed)
                 mutter_settings.connect('changed::overlay-key', self._on_mutter_changed)
-                self.settings_objects['org.gnome.mutter'] = mutter_settings
 
             # mutter.keybindings is handled via GSETTINGS_MAPPINGS in setup_gsettings()
             # but we need to confirm the schema exists and log appropriately
@@ -269,13 +278,10 @@ class WayfireBridge:
     def _setup_budgie_wm_focus_monitor(self):
         """Monitor com.solus-project.budgie-wm settings that need special handling."""
         try:
-            source = Gio.SettingsSchemaSource.get_default()
-            if not source.lookup('com.solus-project.budgie-wm', True):
+            budgie_wm = self._get_settings('com.solus-project.budgie-wm')
+            if budgie_wm is None:
                 log.warning("com.solus-project.budgie-wm schema not found")
                 return
-
-            budgie_wm = Gio.Settings.new('com.solus-project.budgie-wm')
-            self.settings_objects['com.solus-project.budgie-wm'] = budgie_wm
 
             budgie_wm.connect(
                 'changed::window-focus-mode',
@@ -362,11 +368,9 @@ class WayfireBridge:
     def setup_default_terminal(self):
         """Setup monitoring for default terminal"""
         try:
-            source = Gio.SettingsSchemaSource.get_default()
-            if source.lookup('org.gnome.desktop.default-applications.terminal', True):
-                terminal_settings = Gio.Settings.new('org.gnome.desktop.default-applications.terminal')
+            terminal_settings = self._get_settings('org.gnome.desktop.default-applications.terminal')
+            if terminal_settings:
                 terminal_settings.connect('changed::exec', self._on_default_terminal_changed)
-                self.settings_objects['org.gnome.desktop.default-applications.terminal'] = terminal_settings
                 log.info("Default terminal monitoring enabled")
         except Exception:
             log.warning("Could not setup default terminal monitoring", exc_info=True)
@@ -541,17 +545,10 @@ class WayfireBridge:
                 # Get transform function
                 transform = getattr(self.transforms, transform_name)
 
-                # Check if schema exists
-                source = Gio.SettingsSchemaSource.get_default()
-                if not source.lookup(schema, True):
+                settings = self._get_settings(schema)
+                if settings is None:
                     log.warning("Schema %s not found, skipping", schema)
                     continue
-
-                # Create settings object if not already cached
-                if schema not in self.settings_objects:
-                    self.settings_objects[schema] = Gio.Settings.new(schema)
-
-                settings = self.settings_objects[schema]
 
                 # Apply initial value
                 self._apply_setting(schema, key, section, option, transform)

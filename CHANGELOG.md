@@ -16,6 +16,7 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 - **src/wayfire_bridge/mappings.py, src/wayfire.ini:** Syncing night light to a `[gamma]` section: no Wayfire plugin reads it, so it never did anything *(Claude, directed by user)*
 
 ### Fixed
+- **src/wayfire_bridge/bridge.py:** Mouse and touchpad changes only reached `wayfire.ini` at login: `setup_peripheral_monitoring` replaced the stored settings objects with new ones, and the change signals connected to the old ones stopped once they were freed, so speed, natural scroll, acceleration, tap-to-click and the rest didn't follow Control Center. Every handler now gets the one shared object from `_get_settings` *(Claude)*
 - **src/wayfire_bridge/transforms.py:** The button layout only had its `:` removed, so `appmenu:minimize,maximize,close` became `appmenuminimize,maximize,close`, which Wayfire's decorations can't read. It is now the supported buttons (minimize, maximize, close) in the user's order, space-separated (`minimize maximize close`) *(Claude, directed by user)*
 - **src/wayfire.ini:** The default `button_order` was comma-separated; it is `minimize maximize close` *(Claude, directed by user)*
 
