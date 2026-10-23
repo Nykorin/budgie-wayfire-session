@@ -20,6 +20,8 @@ MEDIA_KEY_MAPPINGS = {
         'command_name': 'launch_terminal',
         'command': 'x-terminal-emulator',
         'fallback_command': 'xfce4-terminal',
+        # User's chosen terminal takes precedence over 'command'
+        'command_gsetting': ('org.gnome.desktop.default-applications.terminal', 'exec'),
         'plugin': None,
     },
     'www': {
@@ -282,7 +284,7 @@ class MediaKeysHandler:
             wayfire_binding = ' | '.join(wayfire_bindings)
 
             # Resolve command
-            command = mapping['command']
+            command = self._get_gsetting_command(mapping) or mapping['command']
             if not command or not command.strip():
                 command = mapping.get('fallback_command', '')
             if not command or not command.strip():
@@ -309,6 +311,20 @@ class MediaKeysHandler:
 
         except Exception:
             log.exception("Error applying media key %s", gsettings_key)
+
+    def _get_gsetting_command(self, mapping: dict) -> str:
+        """Read the command from the mapping's 'command_gsetting', if any."""
+        if not mapping.get('command_gsetting'):
+            return ''
+        schema, key = mapping['command_gsetting']
+        try:
+            source = Gio.SettingsSchemaSource.get_default()
+            if not source.lookup(schema, True):
+                return ''
+            return Gio.Settings.new(schema).get_string(key).strip()
+        except Exception:
+            log.debug("Could not read %s::%s", schema, key, exc_info=True)
+            return ''
 
     def _extract_keybindings(self, gsettings_key: str, value) -> list:
         """Normalise a raw gsettings value to a list of binding strings."""

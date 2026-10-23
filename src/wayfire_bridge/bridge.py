@@ -28,6 +28,7 @@ from .transforms import (
     parse_options_string,
     normalize_xkb_options,
     format_keyboard_layout,
+    split_keyboard_layout,
 )
 from .budgie_wm_actions import BudgieWMActionsHandler
 from .logging_config import get_logger
@@ -570,11 +571,12 @@ class WayfireBridge:
             value = settings.get_value(key).unpack()
             transformed_value = transform(value)
 
-            # Special handling for keyboard layout - use fallback if empty
-            if option == 'xkb_layout' and not transformed_value:
-                # GSettings is empty, use the priority system
-                transformed_value = self.get_keyboard_layout()
-                log.debug("GSettings xkb_layout empty, using fallback: %s", transformed_value)
+            # Keyboard layout: get_keyboard_layout() covers GSettings and the
+            # fallbacks, and keeps variants, which Wayfire takes separately
+            if option == 'xkb_layout':
+                transformed_value, variant = split_keyboard_layout(self.get_keyboard_layout())
+                self.config_manager.set_value(section, 'xkb_variant', variant)
+                log.debug("xkb_layout=%r xkb_variant=%r", transformed_value, variant)
 
             # Special handling for xkb_options - use fallback if empty
             elif option == 'xkb_options' and not transformed_value:

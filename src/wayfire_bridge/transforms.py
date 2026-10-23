@@ -160,31 +160,51 @@ class TransformFunctions:
                 'Page_Down': 'PAGEDOWN',
                 'Prior': 'PAGEUP',
                 'Next': 'PAGEDOWN',
+                'Print': 'SYSRQ',
+                'Caps_Lock': 'CAPSLOCK',
+                'Num_Lock': 'NUMLOCK',
+                'Scroll_Lock': 'SCROLLLOCK',
+                'Menu': 'COMPOSE',
+
+                # Punctuation keysyms whose evdev names differ
+                'period': 'DOT',
+                'bracketleft': 'LEFTBRACE',
+                'bracketright': 'RIGHTBRACE',
+                'Above_Tab': 'GRAVE',
+
+                # Keypad
+                'KP_Enter': 'KPENTER',
+                'KP_Add': 'KPPLUS',
+                'KP_Subtract': 'KPMINUS',
+                'KP_Multiply': 'KPASTERISK',
+                'KP_Divide': 'KPSLASH',
+                'KP_Decimal': 'KPDOT',
 
                 # XF86 Hardware keys -> KEY_ equivalents
                 'XF86AudioLowerVolume': 'VOLUMEDOWN',
                 'XF86AudioRaiseVolume': 'VOLUMEUP',
                 'XF86AudioMute': 'MUTE',
-                'XF86AudioPlay': 'PLAY',
-                'XF86AudioPause': 'PAUSE',
-                'XF86AudioStop': 'STOP',
+                'XF86AudioMicMute': 'MICMUTE',
+                'XF86AudioPlay': 'PLAYPAUSE',
+                'XF86AudioPause': 'PAUSECD',
+                'XF86AudioStop': 'STOPCD',
                 'XF86AudioNext': 'NEXTSONG',
                 'XF86AudioPrev': 'PREVIOUSSONG',
                 'XF86AudioRewind': 'REWIND',
-                'XF86AudioForward': 'FORWARD',
+                'XF86AudioForward': 'FASTFORWARD',
                 'XF86AudioMedia': 'MEDIA',
                 'XF86AudioRecord': 'RECORD',
                 'XF86MonBrightnessUp': 'BRIGHTNESSUP',
                 'XF86MonBrightnessDown': 'BRIGHTNESSDOWN',
-                'XF86KbdBrightnessUp': 'BRIGHTNESSUP',
-                'XF86KbdBrightnessDown': 'BRIGHTNESSDOWN',
-                'XF86Display': 'DISPLAYTOGGLE',
+                'XF86KbdBrightnessUp': 'KBDILLUMUP',
+                'XF86KbdBrightnessDown': 'KBDILLUMDOWN',
+                'XF86Display': 'SWITCHVIDEOMODE',
                 'XF86WLAN': 'WLAN',
-                'XF86Tools': 'TOOLS',
+                'XF86Tools': 'CONFIG',
                 'XF86Search': 'SEARCH',
-                'XF86LaunchA': 'LAUNCH0',
-                'XF86LaunchB': 'LAUNCH1',
-                'XF86Explorer': 'EXPLORER',
+                'XF86LaunchA': 'SCALE',
+                'XF86LaunchB': 'DASHBOARD',
+                'XF86Explorer': 'FILE',
                 'XF86Calculator': 'CALC',
                 'XF86Mail': 'MAIL',
                 'XF86WWW': 'WWW',
@@ -192,13 +212,16 @@ class TransformFunctions:
                 'XF86Favorites': 'FAVORITES',
                 'XF86Back': 'BACK',
                 'XF86Forward': 'FORWARD',
-                'XF86Eject': 'EJECT',
+                'XF86Eject': 'EJECTCD',
                 'XF86Sleep': 'SLEEP',
                 'XF86PowerOff': 'POWER',
                 'XF86Battery': 'BATTERY',
                 'XF86Bluetooth': 'BLUETOOTH',
             }
             key = key_map.get(key, key)
+            # Keypad digits: KP_1 -> KP1
+            if len(key) == 4 and key.startswith('KP_') and key[3].isdigit():
+                key = 'KP' + key[3]
 
             # Build the keybinding: <modifier1> <modifier2> KEY_X
             key_part = f"KEY_{key.upper()}"
@@ -347,6 +370,29 @@ def normalize_xkb_options(options_set):
             normalized.add(option)
 
     return normalized
+
+
+def split_keyboard_layout(formatted):
+    """
+    Inverse of format_keyboard_layout: split 'us(dvorak),de' into
+    ('us,de', 'dvorak,') for Wayfire's separate xkb_layout/xkb_variant options.
+    """
+    layouts = []
+    variants = []
+    for part in (formatted or '').split(','):
+        part = part.strip()
+        if not part:
+            continue
+        if '(' in part and part.endswith(')'):
+            layout, variant = part[:-1].split('(', 1)
+        else:
+            layout, variant = part, ''
+        layouts.append(layout)
+        variants.append(variant)
+
+    if not any(variants):
+        return ','.join(layouts), ''
+    return ','.join(layouts), ','.join(variants)
 
 
 def format_keyboard_layout(layout, variant=''):
