@@ -6,6 +6,17 @@ Contributors: user (design & direction), Claude (code)
 
 Each bullet starts with the file it touches; paths are relative to the repository root.
 
+## [2026-10-23]
+
+### Changed
+- **README.md, src/wayfire.ini:** Night light is handled by budgie-daemon, which runs gammastep from the night-light settings; it works on Wayfire through the wlr gamma-control protocol *(Claude, directed by user)*
+- **src/wayfire_bridge/bridge.py:** On startup the `[gamma]` section older versions wrote is removed *(Claude, directed by user)*
+
+### Removed
+- **src/wayfire_bridge/mappings.py, src/wayfire.ini:** Syncing night light to a `[gamma]` section: no Wayfire plugin reads it, so it never did anything *(Claude, directed by user)*
+
+---
+
 ## [2026-10-22]
 
 ### Added

@@ -78,8 +78,7 @@ Lock screen
 
 Display
 
-Night light (gamma adjustment)
-Color temperature
+Night light is handled by budgie-daemon (gammastep), not the bridge
 
 Custom Keybindings
 

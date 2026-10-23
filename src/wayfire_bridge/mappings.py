@@ -436,18 +436,8 @@ GSETTINGS_MAPPINGS = {
         'transform': 'xkb_options'
     },
 
-    # ==========================================================================
-    # Display Settings (Night Light)
-    # ==========================================================================
-    ('org.gnome.settings-daemon.plugins.color', 'night-light-enabled'): {
-        'section': 'gamma',
-        'option': 'enabled',
-        'transform': 'bool'
-    },
-    ('org.gnome.settings-daemon.plugins.color', 'night-light-temperature'): {
-        'section': 'gamma',
-        'option': 'temperature',
-        'transform': 'int'
-    },
+    # Night light is not mapped: Wayfire has no gamma plugin. budgie-daemon
+    # reads org.gnome.settings-daemon.plugins.color itself and runs gammastep,
+    # which works on Wayfire through the wlr gamma-control protocol.
 
 }

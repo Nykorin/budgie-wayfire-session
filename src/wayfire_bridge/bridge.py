@@ -920,6 +920,7 @@ class WayfireBridge:
 
         # Drop entries written by older bridge versions that Wayfire ignores
         self.config_manager.remove_section('notifications')
+        self.config_manager.remove_section('gamma')
         self.config_manager.remove_option('core', 'gtk_theme')
         # The workspace grid lives in [core], not [vswitch]; carry vheight over
         vheight = self.config_manager.get_value('vswitch', 'vheight')
