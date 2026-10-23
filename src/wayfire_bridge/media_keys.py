@@ -51,8 +51,10 @@ MEDIA_KEY_MAPPINGS = {
     },
     'www': {
         'command_name': 'launch_browser',
+        # x-www-browser only exists on Debian-based systems; elsewhere start
+        # the desktop's default browser (xdg-utils, gtk3)
         'command': 'x-www-browser',
-        'fallback_command': 'firefox',
+        'fallback_command': 'sh -c \'gtk-launch "$(xdg-settings get default-web-browser)"\'',
     },
     'email': {
         'command_name': 'launch_email',

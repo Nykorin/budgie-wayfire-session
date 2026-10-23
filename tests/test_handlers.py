@@ -81,6 +81,14 @@ class MediaKeys(BridgeTestCase):
         else:
             self.assertIsNone(binding)
 
+    def test_browser_key_opens_the_default_browser_without_x_www_browser(self):
+        real_which = media_keys.shutil.which
+        with mock.patch.object(media_keys.shutil, 'which',
+                               side_effect=lambda c: None if c == 'x-www-browser' else real_which(c)):
+            self.set(MEDIA, 'www', ['<Super><Shift>F9'])
+        self.assertEqual(self.option('command', 'command_launch_browser'),
+                         'sh -c \'gtk-launch "$(xdg-settings get default-web-browser)"\'')
+
     def test_playback_keys_use_playerctl(self):
         self.set(MEDIA, 'next', ['<Super><Shift>F8'])
         self.assertEqual(self.option('command', 'command_on_next'), 'playerctl next')

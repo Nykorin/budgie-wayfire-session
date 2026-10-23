@@ -44,14 +44,14 @@ Nothing is compiled: meson only installs the files.
 | dbus-python | following system keyboard layout changes (systemd-localed) | `python-dbus` | `python3-dbus` |
 | WirePlumber | volume and mic-mute keys (`wpctl`) | `wireplumber` | `wireplumber` |
 | playerctl | play/pause, next, previous and stop keys | `playerctl` | `playerctl` |
-| xdg-utils | email and file manager keys (`xdg-email`, `xdg-open`) | `xdg-utils` | `xdg-utils` |
+| xdg-utils | email, file manager and browser keys (`xdg-email`, `xdg-open`, `xdg-settings`) | `xdg-utils` | `xdg-utils` |
 | xdg-terminal-exec | the terminal key when Budgie's default terminal is set to it | `xdg-terminal-exec` | `xdg-terminal-exec` |
 | gammastep | night light, run by `budgie-daemon` | `gammastep` | `gammastep` |
 | wayfire-plugins-extra, built for your Wayfire | magnifier (`mag`) and focus-follows-mouse (`follow-focus`) | build from source if the packaged one is older than Wayfire | `wayfire-plugins-extra` |
 | Wayfire Config Manager | changing Wayfire's own options (effects, animations, title bars) | `wcm` | `wcm` |
 | mesa-utils | `eglinfo`, used only to detect virgl in VMs | `mesa-utils` | `mesa-utils` |
 
-The media keys also call a browser, email client and calculator: the first installed of `x-www-browser`/`firefox`, `xdg-email`/`thunderbird` and `mate-calc`/`gnome-calculator`.
+The media keys also call a browser, email client and calculator: `x-www-browser` where it exists (Debian and Ubuntu), else your default browser through `xdg-settings` and `gtk-launch`; and the first installed of `xdg-email`/`thunderbird` and `mate-calc`/`gnome-calculator`.
 
 A Wayfire plugin only loads in the Wayfire version it was built for, and Wayfire skips a mismatched one without saying so on screen. If the magnifier or focus-follows-mouse stops working after a Wayfire update, rebuild wayfire-plugins-extra.
 

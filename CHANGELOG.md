@@ -9,6 +9,7 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 ## [2026-10-23]
 
 ### Added
+- **tests/test_handlers.py:** The browser key opens the default browser when `x-www-browser` isn't installed *(Claude, directed by user)*
 - **tests/test_transforms.py, tests/test_sync.py:** The grid for 0 to 16 workspaces, and the bridge writing it for 1, 4, 5, 6 and 9 over a hand-set `vheight`; these replace the tests for a user-set `vheight` *(Claude, directed by user)*
 - **tests/test_sync.py:** The grid for 1, 4, 5 and 6 workspaces at `vheight = 2`, an invalid `vheight`, and `vheight` in an older config's `[vswitch]` *(Claude, directed by user)*
 - **tests/helpers.py, README.md:** `WAYFIRE_METADATA_DIR` points the tests at another Wayfire build's `share/wayfire/metadata` instead of the installed one, so a patched or newer build can be checked before it is installed *(Claude, directed by user)*
@@ -30,6 +31,7 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 - **src/wayfire_bridge/bridge.py:** Options shared by mouse and touchpad in Wayfire (`left_handed_mode`, `middle_emulation`) are on if either device's setting asks for it (`_merged_flag`); a touchpad set to follow the mouse uses the mouse's value *(Claude)*
 
 ### Changed
+- **README.md:** Say how the browser is picked, and that xdg-utils also serves the browser key *(Claude, directed by user)*
 - **src/wayfire_bridge/bridge.py, src/wayfire_bridge/transforms.py, src/wayfire_bridge/mappings.py:** Budgie's workspace count sets both `vwidth` and `vheight`, as the squarest grid it fills exactly (`workspace_grid`): 4 make 2x2, 6 make 3x2, 9 make 3x3, and a prime count is one row, so no grid has empty spots. `vheight` is no longer the user's to set, and one under `[vswitch]` in an older config is no longer carried over *(Claude, directed by user)*
 - **src/wayfire.ini, README.md:** Describe the grid; the shipped config starts at 2x2 *(Claude, directed by user)*
 - **src/wayfire_bridge/bridge.py, src/wayfire_bridge/mappings.py:** `[core] vwidth` is Budgie's workspace count divided by `vheight`, rounded up, instead of the count itself, so 4 workspaces at `vheight = 2` make a 2x2 grid; before, `vwidth` was always the count and any `vheight` above 1 multiplied the workspaces (4x2 = 8 while Budgie showed 4). `vheight` stays the user's to set, by hand or in WCM; one still under `[vswitch]` from an older config is used too, and an invalid one counts as 1 *(Claude, directed by user)*
@@ -57,6 +59,7 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 - **src/wayfire_bridge/mappings.py, src/wayfire.ini:** Syncing night light to a `[gamma]` section: no Wayfire plugin reads it, so it never did anything *(Claude, directed by user)*
 
 ### Fixed
+- **src/wayfire_bridge/media_keys.py:** The browser key falls back to the desktop's default browser (`gtk-launch` of `xdg-settings get default-web-browser`) instead of `firefox`. `x-www-browser` is a Debian alternatives link that Arch and others don't have, so with Firefox not installed the key was bound to a command that doesn't exist and did nothing *(Claude, directed by user)*
 - **src/wayfire-bridge:** Without `XDG_RUNTIME_DIR`, the single-instance lock was `/tmp/wayfire-bridge.lock`, a name shared by every user: another user's file there made the bridge crash, or exit as if already running, so settings silently stopped syncing. The lock now falls back to `~/.cache/budgie-wayfire/` (`$XDG_CACHE_HOME` if set), and a lock that can't be created is logged and the bridge runs without it instead of crashing *(Claude)*
 - **src/startbudgiewayfire.in:** Without `/run/user` or `/var/run/user` (no logind), the launcher used `/tmp/${USER}-runtime` and accepted it if it already existed, whoever owned it. Another local user could create it first and replace the sockets the session puts there (Wayland, PipeWire, and Wayfire's IPC, which can run commands). The session now starts only if the runtime directory is a real directory owned by the user with mode 700, as the XDG spec requires; a logind session (`/run/user/UID`) already is *(Claude)*
 - **src/startbudgiewayfire.in:** The launcher stops Wayfire once no `budgie-session-binary` is left, but `pgrep -f` and `pidwait -f` matched every user's processes. Another user's process, such as a second Budgie session with fast user switching or one merely named like it, kept this user's Wayfire running after logout, logged in and with its shortcuts working, and kept the display manager from showing the greeter again. Both now match only the user's own processes (`-u "$(id -u)"`) *(Claude)*
