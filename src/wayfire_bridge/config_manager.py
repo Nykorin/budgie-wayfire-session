@@ -180,8 +180,12 @@ class ConfigManager:
         place       — placement mode
         switcher    — next_view, prev_view
         fast-switcher — activate, activate_backward
+        xdg-activation — lets apps pass focus to an existing window (a link
+                         clicked elsewhere raising the browser, a notification
+                         raising its app)
         """
-        required = ['wm-actions', 'grid', 'move', 'place', 'switcher', 'fast-switcher']
+        required = ['wm-actions', 'grid', 'move', 'place', 'switcher', 'fast-switcher',
+                    'xdg-activation']
         for plugin in required:
             self.ensure_plugin(plugin)
 
