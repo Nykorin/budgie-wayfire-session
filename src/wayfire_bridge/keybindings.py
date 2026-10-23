@@ -9,9 +9,17 @@ import gi
 gi.require_version('Gio', '2.0')
 from gi.repository import Gio
 
+from .budgie_wm_actions import BUDGIE_WM_ACTION_MAPPINGS
 from .logging_config import get_logger
+from .media_keys import MEDIA_KEY_MAPPINGS
 
 log = get_logger(__name__)
+
+# [command] names the bridge writes itself; custom keybindings must not reuse them
+RESERVED_COMMAND_NAMES = {
+    m['command_name']
+    for m in (*MEDIA_KEY_MAPPINGS.values(), *BUDGIE_WM_ACTION_MAPPINGS.values())
+} | {'budgie_menu'}
 
 
 class CustomKeybindingsHandler:
@@ -67,10 +75,11 @@ class CustomKeybindingsHandler:
             for path in previous_paths - current_paths:
                 self._remove_custom_keybinding(path)
 
-            # Add or update keybindings
-            for path in current_paths:
+            # Add or update keybindings, in list order so name clashes
+            # resolve the same way every time
+            for path in paths:
                 if path in previous_paths:
-                    self._update_custom_keybinding(path)
+                    self._update_custom_keybinding(path, save=False)
                 else:
                     self._add_custom_keybinding(path)
 
@@ -81,41 +90,48 @@ class CustomKeybindingsHandler:
         except Exception:
             log.exception("Error syncing custom keybindings")
 
+    def _config_name(self, name: str, path: str) -> str:
+        """Pick the [command] suffix for a custom keybinding.
+
+        Uses the sanitized name, falling back to name + path id when that
+        clashes with a built-in binding or another custom keybinding.
+        """
+        sanitized = self.transforms.sanitize_name(name)
+        taken = {
+            kb['sanitized_name'] for p, kb in self.custom_keybindings.items()
+            if p != path
+        }
+        if sanitized in RESERVED_COMMAND_NAMES or sanitized in taken:
+            path_id = self.transforms.sanitize_name(path.rstrip('/').rsplit('/', 1)[-1])
+            sanitized = f"{sanitized}_{path_id}"
+        return sanitized
+
     def _add_custom_keybinding(self, path: str):
         """Add a new custom keybinding"""
         try:
             settings = Gio.Settings.new_with_path(self.custom_schema, path)
 
-            name = settings.get_string('name')
-            command = settings.get_string('command')
-            binding = settings.get_string('binding')
-
-            if not name or not command:
-                log.debug("Incomplete custom keybinding at %s (no name/command), skipping", path)
-                return
-
-            sanitized_name = self.transforms.sanitize_name(name)
+            # Track the path even while name/command are still empty:
+            # control-center may add the path before filling in its fields
             self.custom_keybindings[path] = {
-                'name': name,
-                'sanitized_name': sanitized_name,
-                'command': command,
-                'binding': binding,
+                'name': '',
+                'sanitized_name': '',
+                'command': '',
+                'binding': '',
             }
             self.custom_keybinding_settings[path] = settings
-
-            self._apply_custom_keybinding(path)
 
             settings.connect('changed::name',    lambda s, k, p=path: self._update_custom_keybinding(p))
             settings.connect('changed::command', lambda s, k, p=path: self._update_custom_keybinding(p))
             settings.connect('changed::binding', lambda s, k, p=path: self._update_custom_keybinding(p))
 
-            log.info("Added custom keybinding: %r -> %s", name, command)
+            self._update_custom_keybinding(path, save=False)
 
         except Exception:
             log.exception("Error adding custom keybinding %s", path)
 
-    def _update_custom_keybinding(self, path: str):
-        """Update an existing custom keybinding"""
+    def _update_custom_keybinding(self, path: str, save: bool = True):
+        """Apply the current state of a tracked custom keybinding"""
         try:
             if path not in self.custom_keybinding_settings:
                 return
@@ -127,7 +143,8 @@ class CustomKeybindingsHandler:
             binding = settings.get_string('binding')
 
             old_sanitized = self.custom_keybindings[path]['sanitized_name']
-            new_sanitized = self.transforms.sanitize_name(name)
+            complete = bool(name and command)
+            new_sanitized = self._config_name(name, path) if complete else ''
 
             self.custom_keybindings[path] = {
                 'name': name,
@@ -137,15 +154,18 @@ class CustomKeybindingsHandler:
             }
 
             # If name changed, remove the old config entries
-            if old_sanitized != new_sanitized:
+            if old_sanitized and old_sanitized != new_sanitized:
                 self._remove_custom_keybinding_entries(old_sanitized)
 
-            self._apply_custom_keybinding(path)
+            if complete:
+                self._apply_custom_keybinding(path)
+                log.info("Applied custom keybinding: %r -> %s", name, command)
+            else:
+                log.debug("Incomplete custom keybinding at %s (no name/command), waiting", path)
 
-            self.config_manager.save()
-            self.config_manager.reload_wayfire()
-
-            log.info("Updated custom keybinding: %r -> %s", name, command)
+            if save:
+                self.config_manager.save()
+                self.config_manager.reload_wayfire()
 
         except Exception:
             log.exception("Error updating custom keybinding %s", path)
@@ -155,7 +175,8 @@ class CustomKeybindingsHandler:
         try:
             if path in self.custom_keybindings:
                 sanitized_name = self.custom_keybindings[path]['sanitized_name']
-                self._remove_custom_keybinding_entries(sanitized_name)
+                if sanitized_name:
+                    self._remove_custom_keybinding_entries(sanitized_name)
 
                 del self.custom_keybindings[path]
                 self.custom_keybinding_settings.pop(path, None)
