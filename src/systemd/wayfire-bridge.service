@@ -1,13 +1,12 @@
 [Unit]
 Description=Wayfire Bridge - Gsettings to Wayfire Configuration Sync
-Documentation=man:wayfire-bridge(1)
 PartOf=graphical-session.target
 After=graphical-session.target
 ConditionEnvironment=WAYLAND_DISPLAY
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/wayfire-bridge
+ExecStart=/usr/libexec/budgie-desktop/wayfire-bridge
 Restart=on-failure
 RestartSec=5
 
@@ -24,7 +23,7 @@ Environment="PYTHONUNBUFFERED=1"
 #Environment="WAYFIRE_BRIDGE_VERBOSE=1"
 #
 # Alternatively, pass -v / --verbose directly:
-#ExecStart=/usr/bin/wayfire-bridge --verbose
+#ExecStart=/usr/libexec/budgie-desktop/wayfire-bridge --verbose
 
 # Logging — journald captures stderr automatically
 StandardOutput=journal
@@ -35,7 +34,7 @@ SyslogIdentifier=wayfire-bridge
 PrivateTmp=yes
 ProtectSystem=strict
 ProtectHome=read-only
-ReadWritePaths=%h/.config/budgie-desktop/wayfire
+ReadWritePaths=%h/.config/budgie-desktop/wayfire %t
 NoNewPrivileges=yes
 
 [Install]
