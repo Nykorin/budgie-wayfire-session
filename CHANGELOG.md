@@ -13,6 +13,8 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 - **src/wayfire-bridge, src/systemd/wayfire-bridge.service:** Only one bridge runs at a time: a second one, from `[autostart]` and the systemd unit both, exits on a lock in `$XDG_RUNTIME_DIR/wayfire-bridge.lock` instead of fighting the first over `wayfire.ini`; the unit may write `%t` for it *(Claude)*
 
 ### Changed
+- **src/wayfire_bridge/bridge.py:** On startup, `binding_win_*` and `binding_0` written by older versions are removed from `[vswitch]` *(Claude)*
+- **src/wayfire.ini:** The settings list names `with_win_left/right` for moving a window between workspaces (was `[command] binding_move_left/right`) *(Claude)*
 - **README.md:** The bridge's installed path (`/usr/libexec/budgie-desktop/wayfire-bridge`), the clone folder's name, debugging with `pkill -f wayfire-bridge` and `wayfire-bridge --verbose`, and no `__init__.py` or GTK theme in the lists *(Claude)*
 - **src/wayfire.ini:** The settings list says focus mode comes from `com.solus-project.budgie-wm` and the follow-focus plugin, not `[core] focus_mode` *(Claude)*
 - **src/wayfire_bridge/bridge.py:** On startup, configs written by older versions lose the `[notifications]` section and `[core] gtk_theme`, and `[vswitch] vwidth`/`vheight` are removed, a `vheight` set there moving to `[core]` *(Claude)*
@@ -28,6 +30,8 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 - **src/wayfire.ini:** The `[command]` entries for close, maximize, minimize and moving a window to the left/right workspace: their bindings put the key before the modifiers (`KEY_Q ALT`) and their commands (`wm-actions close`, `vswitch-move left`) don't exist, so they did nothing. The bridge writes the real bindings to `[core]`, `[wm-actions]` and `[vswitch]` *(Claude, directed by user)*
 
 ### Fixed
+- **src/wayfire_bridge/mappings.py:** Wayfire numbers `[vswitch] binding_N` from 1, but `switch-to-workspace-1` was written as `binding_0`, so Super+Home went nowhere and every numbered shortcut was off by one *(Claude)*
+- **src/wayfire_bridge/mappings.py:** Moving a window to another workspace did nothing: the bridge wrote `binding_win_*`, which Wayfire 0.11 doesn't have. `move-to-workspace-left/right` use `with_win_*` (the window moves and you follow, like mutter) and `move-to-workspace-N`/`-last` use `send_win_*` (the window moves, you stay) *(Claude)*
 - **src/wayfire_bridge/bridge.py:** The startup sync called `_on_double_click_changed`, which doesn't exist (the method is `_on_double_click_unsupported`); the error was hidden at debug level *(Claude)*
 - **src/startbudgiewayfire.in:** If `budgie-session-binary` hadn't started within about 10 seconds, `pidwait` returned at once and Wayfire was killed, ending a slow first login. The launcher now waits for the session for as long as Wayfire is alive, and exits if Wayfire does *(Claude)*
 - **src/startbudgiewayfire.in:** Without `pidwait` (procps older than 4) the session ended immediately; a polling loop takes its place. The config path is quoted *(Claude)*

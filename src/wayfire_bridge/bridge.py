@@ -902,6 +902,12 @@ class WayfireBridge:
             self.config_manager.set_value('core', 'vheight', vheight)
         self.config_manager.remove_option('vswitch', 'vwidth')
         self.config_manager.remove_option('vswitch', 'vheight')
+        # Old vswitch names: binding_win_* doesn't exist and binding_0 was an
+        # off-by-one (workspaces are numbered from 1)
+        if 'vswitch' in self.config_manager.config:
+            for option in list(self.config_manager.config['vswitch']):
+                if option.startswith('binding_win_') or option == 'binding_0':
+                    self.config_manager.remove_option('vswitch', option)
 
         # Log layout switching status so it's visible in journal
         layout = self.get_keyboard_layout()

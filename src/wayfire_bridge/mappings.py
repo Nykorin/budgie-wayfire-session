@@ -131,15 +131,16 @@ GSETTINGS_MAPPINGS = {
         'transform': 'keybinding'
     },
 
-    # --- [vswitch] - workspace switching (already correct) ---
+    # --- [vswitch] - workspace switching ---
+    # move-to-workspace-left/right move the window and follow it: with_win_*
     ('org.gnome.desktop.wm.keybindings', 'move-to-workspace-left'): {
         'section': 'vswitch',
-        'option': 'binding_win_left',
+        'option': 'with_win_left',
         'transform': 'keybinding'
     },
     ('org.gnome.desktop.wm.keybindings', 'move-to-workspace-right'): {
         'section': 'vswitch',
-        'option': 'binding_win_right',
+        'option': 'with_win_right',
         'transform': 'keybinding'
     },
     ('org.gnome.desktop.wm.keybindings', 'switch-to-workspace-left'): {
@@ -196,10 +197,10 @@ GSETTINGS_MAPPINGS = {
     # ==========================================================================
     # Workspace-specific keybindings
     # ==========================================================================
-    # IMPORTANT: GSettings workspace numbers are 1-based.
-    # vswitch binding_N is 0-based.
-    # GSettings switch-to-workspace-1 -> vswitch binding_0
-    # GSettings switch-to-workspace-2 -> vswitch binding_1  etc.
+    # GSettings and Wayfire both number workspaces from 1:
+    # switch-to-workspace-N -> vswitch binding_N
+    # move-to-workspace-N   -> vswitch send_win_N (moves the window only,
+    #                          like mutter; with_win_N would also follow it)
     #
     # switch-to-workspace-last: labwc goes to absolute last workspace.
     # Wayfire binding_last goes to previously-active workspace.
@@ -208,22 +209,22 @@ GSETTINGS_MAPPINGS = {
     # --- Switch to numbered workspace ---
     ('org.gnome.desktop.wm.keybindings', 'switch-to-workspace-1'): {
         'section': 'vswitch',
-        'option': 'binding_0',
+        'option': 'binding_1',
         'transform': 'keybinding'
     },
     ('org.gnome.desktop.wm.keybindings', 'switch-to-workspace-2'): {
         'section': 'vswitch',
-        'option': 'binding_1',
+        'option': 'binding_2',
         'transform': 'keybinding'
     },
     ('org.gnome.desktop.wm.keybindings', 'switch-to-workspace-3'): {
         'section': 'vswitch',
-        'option': 'binding_2',
+        'option': 'binding_3',
         'transform': 'keybinding'
     },
     ('org.gnome.desktop.wm.keybindings', 'switch-to-workspace-4'): {
         'section': 'vswitch',
-        'option': 'binding_3',
+        'option': 'binding_4',
         'transform': 'keybinding'
     },
     ('org.gnome.desktop.wm.keybindings', 'switch-to-workspace-last'): {
@@ -238,47 +239,47 @@ GSETTINGS_MAPPINGS = {
     # --- Move window to numbered workspace ---
     ('org.gnome.desktop.wm.keybindings', 'move-to-workspace-1'): {
         'section': 'vswitch',
-        'option': 'binding_win_0',
+        'option': 'send_win_1',
         'transform': 'keybinding'
     },
     ('org.gnome.desktop.wm.keybindings', 'move-to-workspace-2'): {
         'section': 'vswitch',
-        'option': 'binding_win_1',
+        'option': 'send_win_2',
         'transform': 'keybinding'
     },
     ('org.gnome.desktop.wm.keybindings', 'move-to-workspace-3'): {
         'section': 'vswitch',
-        'option': 'binding_win_2',
+        'option': 'send_win_3',
         'transform': 'keybinding'
     },
     ('org.gnome.desktop.wm.keybindings', 'move-to-workspace-4'): {
         'section': 'vswitch',
-        'option': 'binding_win_3',
+        'option': 'send_win_4',
         'transform': 'keybinding'
     },
     ('org.gnome.desktop.wm.keybindings', 'move-to-workspace-5'): {
         'section': 'vswitch',
-        'option': 'binding_win_4',
+        'option': 'send_win_5',
         'transform': 'keybinding'
     },
     ('org.gnome.desktop.wm.keybindings', 'move-to-workspace-6'): {
         'section': 'vswitch',
-        'option': 'binding_win_5',
+        'option': 'send_win_6',
         'transform': 'keybinding'
     },
     ('org.gnome.desktop.wm.keybindings', 'move-to-workspace-7'): {
         'section': 'vswitch',
-        'option': 'binding_win_6',
+        'option': 'send_win_7',
         'transform': 'keybinding'
     },
     ('org.gnome.desktop.wm.keybindings', 'move-to-workspace-8'): {
         'section': 'vswitch',
-        'option': 'binding_win_7',
+        'option': 'send_win_8',
         'transform': 'keybinding'
     },
     ('org.gnome.desktop.wm.keybindings', 'move-to-workspace-last'): {
         'section': 'vswitch',
-        'option': 'binding_win_last',
+        'option': 'send_win_last',
         'transform': 'keybinding'
         # Note: same semantic difference as switch-to-workspace-last above.
     },
