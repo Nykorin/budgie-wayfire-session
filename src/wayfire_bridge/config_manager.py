@@ -73,18 +73,16 @@ class ConfigManager:
         else:
             self.config_path = Path(config_path)
 
-        # Use strict=False to allow duplicate keys (last one wins)
-        self.config = configparser.ConfigParser(
-            interpolation=None,
-            strict=False,  # Allow duplicate keys - last value wins
-            allow_no_value=True  # Allow keys without values
-        )
-        self.config.optionxform = str  # Preserve case sensitivity
+        # Changes made since the last save, replayed onto the file if it was
+        # edited externally (WCM, a text editor) in the meantime
+        self._pending = []
+        # (mtime, size) of the file as last read or written by us
+        self._disk_stamp = None
 
         # Load existing config or create new one
         if self.config_path.exists():
             try:
-                self.config.read(self.config_path)
+                self._load()
                 log.info("Loaded existing config from %s", self.config_path)
             except configparser.Error as e:
                 log.error("Error reading config file: %s", e)
@@ -96,12 +94,41 @@ class ConfigManager:
                     log.info("Backed up problematic config to %s", backup_path)
                 except Exception:
                     log.exception("Could not backup config file")
+                self.config = self._new_parser()
         else:
+            self.config = self._new_parser()
             log.info("Will create new config at %s", self.config_path)
 
+        self._ensure_required()
+
+    @staticmethod
+    def _new_parser():
+        # strict=False allows duplicate keys (last one wins)
+        config = configparser.ConfigParser(
+            interpolation=None,
+            strict=False,
+            allow_no_value=True  # Allow keys without values
+        )
+        config.optionxform = str  # Preserve case sensitivity
+        return config
+
+    def _load(self):
+        """Read wayfire.ini from disk, replacing the in-memory config"""
+        config = self._new_parser()
+        config.read(self.config_path)
+        self.config = config
+        self._disk_stamp = self._stamp()
+
+    def _stamp(self):
+        try:
+            st = self.config_path.stat()
+            return (st.st_mtime_ns, st.st_size)
+        except FileNotFoundError:
+            return None
+
+    def _ensure_required(self):
         # Ensure critical autostart section exists for budgie-desktop
         self._ensure_autostart_section()
-
         # ensure hot wayfire config via IPC is enabled
         self._ensure_ipc_plugin()
 
@@ -111,6 +138,10 @@ class ConfigManager:
 
     def set_value(self, section: str, option: str, value: str):
         """Set a configuration value"""
+        self._pending.append(('set', section, option, value))
+        self._set_value(section, option, value)
+
+    def _set_value(self, section: str, option: str, value: str):
         if section not in self.config:
             self.config[section] = {}
         self.config[section][option] = value
@@ -123,11 +154,16 @@ class ConfigManager:
 
     def remove_option(self, section: str, option: str):
         """Remove a configuration option"""
+        self._pending.append(('remove_option', section, option))
+        self._remove_option(section, option)
+
+    def _remove_option(self, section: str, option: str):
         if section in self.config and option in self.config[section]:
             del self.config[section][option]
 
     def remove_section(self, section: str):
         """Remove a whole configuration section"""
+        self._pending.append(('remove_section', section))
         self.config.remove_section(section)
 
     def has_option(self, section: str, option: str) -> bool:
@@ -179,11 +215,41 @@ class ConfigManager:
     # Persistence
     # ------------------------------------------------------------------
 
+    def _merge_external_changes(self):
+        """Re-read wayfire.ini if it was edited since we last read or wrote it.
+
+        Without this, every save wrote back the copy loaded at login and
+        silently undid edits made meanwhile in WCM or a text editor. The
+        bridge's own changes since the last save are replayed on top.
+        """
+        if self._disk_stamp is None or self._stamp() in (None, self._disk_stamp):
+            return
+        log.info("%s changed on disk, merging before saving", self.config_path)
+        try:
+            self._load()
+        except configparser.Error:
+            log.exception("Could not re-read edited %s, keeping in-memory copy", self.config_path)
+            return
+        for op, *args in self._pending:
+            if op == 'set':
+                self._set_value(*args)
+            elif op == 'remove_option':
+                self._remove_option(*args)
+            elif op == 'remove_section':
+                self.config.remove_section(*args)
+            elif op == 'ensure_plugin':
+                self._ensure_plugin(*args)
+            elif op == 'remove_plugin':
+                self._remove_plugin(*args)
+        self._ensure_required()
+
     def save(self):
         """Write configuration to wayfire.ini"""
         try:
             # Ensure directory exists
             self.config_path.parent.mkdir(parents=True, exist_ok=True)
+
+            self._merge_external_changes()
 
             log.debug("Saving configuration to %s", self.config_path)
 
@@ -206,6 +272,8 @@ class ConfigManager:
                 self.config.write(f)
                 f.flush()
 
+            self._pending.clear()
+            self._disk_stamp = self._stamp()
             log.debug("Configuration written to %s", self.config_path)
 
         except Exception:
@@ -266,6 +334,10 @@ class ConfigManager:
 
     def ensure_plugin(self, plugin_name: str):
         """Add plugin_name to [core] plugins if not already present."""
+        self._pending.append(('ensure_plugin', plugin_name))
+        self._ensure_plugin(plugin_name)
+
+    def _ensure_plugin(self, plugin_name: str):
         plugins = self._get_plugins_list()
         if plugin_name not in plugins:
             plugins.append(plugin_name)
@@ -274,6 +346,10 @@ class ConfigManager:
 
     def remove_plugin(self, plugin_name: str):
         """Remove plugin_name from [core] plugins if present."""
+        self._pending.append(('remove_plugin', plugin_name))
+        self._remove_plugin(plugin_name)
+
+    def _remove_plugin(self, plugin_name: str):
         plugins = self._get_plugins_list()
         if plugin_name in plugins:
             plugins.remove(plugin_name)
