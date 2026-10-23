@@ -488,6 +488,17 @@ class WayfireBridge:
         self.config_manager.set_value('command', 'binding_budgie_menu', wayfire_binding)
         self.config_manager.set_value('command', 'command_budgie_menu', budgie_panel_command)
 
+        # Drop the same binding from expo's toggle so the two don't collide
+        expo_toggle = self.config_manager.get_value('expo', 'toggle')
+        if expo_toggle:
+            alternatives = [a.strip() for a in expo_toggle.split('|')]
+            if wayfire_binding in alternatives:
+                remaining = [a for a in alternatives if a != wayfire_binding]
+                self.config_manager.set_value(
+                    'expo', 'toggle', ' | '.join(remaining) or 'disabled'
+                )
+                log.info("Removed %s from [expo] toggle (used by Budgie menu)", wayfire_binding)
+
         if not self.delay_config_write:
             self.config_manager.save()
             self.config_manager.reload_wayfire()
