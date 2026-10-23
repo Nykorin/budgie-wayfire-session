@@ -1,5 +1,8 @@
 session creation for wayfire with budgie-desktop
 
+> [!IMPORTANT]
+> **This fork's changes were written with AI.** Everything after upstream commit `41842ea`, listed in [`CHANGELOG.md`](CHANGELOG.md), was written by Claude (Anthropic), following the author's design, requests and review; the code before it is Ubuntu Budgie's. The author tested it only on their own system (CachyOS, Wayfire 0.11, Budgie 10.10), and it has not been reviewed or tested by anyone else, including the upstream project. The magnifier and focus-follows-mouse also need wayfire-plugins-extra built for your Wayfire version. Read the changes before installing, and keep a copy of `~/.config/budgie-desktop/wayfire/`. It comes with no warranty.
+
 # ubuntu prereqs
     sudo apt install meson build-essential git
     sudo apt install procps wayfire
