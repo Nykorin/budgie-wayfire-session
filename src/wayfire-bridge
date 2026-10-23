@@ -22,9 +22,15 @@ def acquire_instance_lock():
 
     The bridge can be started both from wayfire.ini [autostart] and from the
     systemd user unit; two copies would fight over the same wayfire.ini.
+
+    The lock lives in a directory only this user can write: the runtime
+    directory, else ~/.cache. A shared name in /tmp would let another user
+    create the file first and keep the bridge from starting.
     """
-    runtime_dir = os.environ.get('XDG_RUNTIME_DIR') or '/tmp'
-    lock_file = open(os.path.join(runtime_dir, 'wayfire-bridge.lock'), 'w')
+    lock_dir = os.environ.get('XDG_RUNTIME_DIR') or os.path.join(
+        os.environ.get('XDG_CACHE_HOME') or os.path.expanduser('~/.cache'), 'budgie-wayfire')
+    os.makedirs(lock_dir, mode=0o700, exist_ok=True)
+    lock_file = open(os.path.join(lock_dir, 'wayfire-bridge.lock'), 'w')
     try:
         fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except BlockingIOError:
@@ -42,10 +48,14 @@ def main():
 
     log = setup_logging(verbose=args.verbose or is_verbose())
 
-    lock_file = acquire_instance_lock()
-    if lock_file is None:
-        log.warning("Another wayfire-bridge is already running, exiting")
-        sys.exit(0)
+    try:
+        lock_file = acquire_instance_lock()  # held for as long as main() runs
+    except OSError:
+        log.warning("Could not create the single-instance lock, running without it", exc_info=True)
+    else:
+        if lock_file is None:
+            log.warning("Another wayfire-bridge is already running, exiting")
+            sys.exit(0)
 
     try:
         # Imported after logging is configured so module loggers inherit it
