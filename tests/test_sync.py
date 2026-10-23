@@ -143,5 +143,48 @@ class Behaviour(BridgeTestCase):
         self.assertIn("XCURSOR_THEME='Some Cursor Theme'", environment)
 
 
+
+class WorkspaceGrid(BridgeTestCase):
+    """vwidth is the workspace count spread over vheight rows."""
+
+    vheight = '2'
+
+    def prepare_ini(self):
+        super().prepare_ini()
+        text = self.ini.read_text()
+        self.assertIn('\nvheight = 1\n', text)
+        self.ini.write_text(text.replace('\nvheight = 1\n', f'\nvheight = {self.vheight}\n', 1))
+
+    def test_workspaces_fill_the_rows(self):
+        for count, columns in ((4, '2'), (5, '3'), (6, '3'), (1, '1')):
+            with self.subTest(workspaces=count):
+                self.set('org.gnome.desktop.wm.preferences', 'num-workspaces', count, wait=0.1)
+                self.assertEqual(self.option('core', 'vwidth'), columns)
+        self.assertEqual(self.option('core', 'vheight'), '2')
+
+
+class WorkspaceGridInvalidHeight(WorkspaceGrid):
+
+    vheight = 'two'
+
+    def test_workspaces_fill_the_rows(self):
+        self.set('org.gnome.desktop.wm.preferences', 'num-workspaces', 4)
+        self.assertEqual(self.option('core', 'vwidth'), '4')
+
+
+class WorkspaceGridOldVheight(BridgeTestCase):
+    """An older config with vheight under [vswitch] still gets the grid."""
+
+    def prepare_ini(self):
+        super().prepare_ini()
+        text = self.ini.read_text().replace('\nvheight = 1\n', '\n', 1)
+        self.ini.write_text(text.replace('[vswitch]\n', '[vswitch]\nvheight = 2\n', 1))
+
+    def test_rows_moved_to_core_and_used(self):
+        self.set('org.gnome.desktop.wm.preferences', 'num-workspaces', 4)
+        self.assertEqual(self.option('core', 'vheight'), '2')
+        self.assertEqual(self.option('core', 'vwidth'), '2')
+
+
 if __name__ == '__main__':
     unittest.main()

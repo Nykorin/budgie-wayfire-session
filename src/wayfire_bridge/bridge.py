@@ -536,6 +536,9 @@ class WayfireBridge:
             elif option == 'kb_repeat_rate' and not self._settings_value(
                     'org.gnome.desktop.peripherals.keyboard', 'repeat', True):
                 result = 0
+            # The workspace count fills a grid vheight rows tall
+            elif (section, option) == ('core', 'vwidth'):
+                result = self._grid_columns(value)
             else:
                 result = transform(value)
 
@@ -548,6 +551,22 @@ class WayfireBridge:
 
         except Exception:
             log.exception("Error applying %s::%s", schema, key)
+
+    def _grid_columns(self, workspaces: int) -> int:
+        """Columns needed to fit the workspaces into vheight rows, rounded up.
+
+        vheight isn't synced from Budgie (it has no workspace rows), so it is
+        read from wayfire.ini: 4 workspaces at vheight 2 make a 2x2 grid.
+        Configs from older versions may still have it under [vswitch].
+        """
+        rows = (self.config_manager.get_value('core', 'vheight')
+                or self.config_manager.get_value('vswitch', 'vheight') or '1')
+        try:
+            rows = max(1, int(rows))
+        except ValueError:
+            log.warning("Ignoring invalid vheight %r, using 1", rows)
+            rows = 1
+        return max(1, -(-int(workspaces) // rows))
 
     def _merged_keybinding(self, section: str, option: str) -> str:
         """Combine the bindings of every gsettings key that targets one option."""
