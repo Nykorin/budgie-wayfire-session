@@ -69,7 +69,7 @@ class OldConfig(BridgeTestCase):
         config = self.config()
         self.assertFalse(config.has_option('vswitch', 'vwidth'))
         self.assertFalse(config.has_option('vswitch', 'vheight'))
-        self.assertEqual(config.get('core', 'vheight'), '2')
+        self.assertIsNotNone(config.get('core', 'vheight'))
         self.assertIsNotNone(config.get('core', 'vwidth'))
 
     def test_broken_command_entries_are_removed_but_not_the_users_own(self):

@@ -4,7 +4,7 @@ import re
 import unittest
 
 from tests.helpers import libevdev_key_valid
-from wayfire_bridge.transforms import TransformFunctions as T, split_keyboard_layout, format_keyboard_layout
+from wayfire_bridge.transforms import TransformFunctions as T, split_keyboard_layout, format_keyboard_layout, workspace_grid
 
 
 class KeybindingTests(unittest.TestCase):
@@ -81,6 +81,13 @@ class ValueTests(unittest.TestCase):
         self.assertEqual(split_keyboard_layout('us'), ('us', ''))
         self.assertEqual(split_keyboard_layout(None), ('', ''))
         self.assertEqual(split_keyboard_layout(format_keyboard_layout('us,de', 'dvorak,')), ('us,de', 'dvorak,'))
+
+    def test_workspace_grid_is_the_squarest_exact_fit(self):
+        cases = {1: (1, 1), 2: (2, 1), 3: (3, 1), 4: (2, 2), 5: (5, 1), 6: (3, 2), 7: (7, 1),
+                 8: (4, 2), 9: (3, 3), 10: (5, 2), 12: (4, 3), 16: (4, 4), 0: (1, 1)}
+        for count, grid in cases.items():
+            with self.subTest(workspaces=count):
+                self.assertEqual(workspace_grid(count), grid)
 
     def test_touchpad_values(self):
         self.assertEqual(T.click_method('fingers'), 'clickfinger')

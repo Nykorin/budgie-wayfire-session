@@ -29,6 +29,7 @@ from .transforms import (
     normalize_xkb_options,
     format_keyboard_layout,
     split_keyboard_layout,
+    workspace_grid,
 )
 from .budgie_wm_actions import BudgieWMActionsHandler
 from .logging_config import get_logger
@@ -536,9 +537,10 @@ class WayfireBridge:
             elif option == 'kb_repeat_rate' and not self._settings_value(
                     'org.gnome.desktop.peripherals.keyboard', 'repeat', True):
                 result = 0
-            # The workspace count fills a grid vheight rows tall
+            # The workspace count is laid out as the squarest grid it fills
             elif (section, option) == ('core', 'vwidth'):
-                result = self._grid_columns(value)
+                result, rows = workspace_grid(value)
+                self.config_manager.set_value(section, 'vheight', str(rows))
             else:
                 result = transform(value)
 
@@ -551,22 +553,6 @@ class WayfireBridge:
 
         except Exception:
             log.exception("Error applying %s::%s", schema, key)
-
-    def _grid_columns(self, workspaces: int) -> int:
-        """Columns needed to fit the workspaces into vheight rows, rounded up.
-
-        vheight isn't synced from Budgie (it has no workspace rows), so it is
-        read from wayfire.ini: 4 workspaces at vheight 2 make a 2x2 grid.
-        Configs from older versions may still have it under [vswitch].
-        """
-        rows = (self.config_manager.get_value('core', 'vheight')
-                or self.config_manager.get_value('vswitch', 'vheight') or '1')
-        try:
-            rows = max(1, int(rows))
-        except ValueError:
-            log.warning("Ignoring invalid vheight %r, using 1", rows)
-            rows = 1
-        return max(1, -(-int(workspaces) // rows))
 
     def _merged_keybinding(self, section: str, option: str) -> str:
         """Combine the bindings of every gsettings key that targets one option."""
@@ -887,10 +873,7 @@ class WayfireBridge:
         ):
             self.config_manager.remove_option(section, option)
         self.config_manager.remove_option('core', 'gtk_theme')
-        # The workspace grid lives in [core], not [vswitch]; carry vheight over
-        vheight = self.config_manager.get_value('vswitch', 'vheight')
-        if vheight is not None and not self.config_manager.has_option('core', 'vheight'):
-            self.config_manager.set_value('core', 'vheight', vheight)
+        # The workspace grid lives in [core], not [vswitch]
         self.config_manager.remove_option('vswitch', 'vwidth')
         self.config_manager.remove_option('vswitch', 'vheight')
         # [command] entries from older shipped configs: key-first bindings and

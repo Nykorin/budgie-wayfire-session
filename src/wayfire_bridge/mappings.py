@@ -26,7 +26,7 @@ GSETTINGS_MAPPINGS = {
         'option': 'button_order',
         'transform': 'button_layout'
     },
-    # vwidth is the workspace count divided by vheight (see _grid_columns)
+    # The workspace count is split into vwidth and vheight (see workspace_grid)
     ('org.gnome.desktop.wm.preferences', 'num-workspaces'): {
         'section': 'core',
         'option': 'vwidth',

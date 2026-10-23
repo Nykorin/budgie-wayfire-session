@@ -84,7 +84,7 @@ The bridge watches GSettings and writes the matching options into `wayfire.ini`,
 ## What the bridge syncs
 
 - **Windows:** close, minimize, maximize and restore, toggle maximized, fullscreen, always on top, show on all workspaces, raise and lower, show desktop, tile left and right, the Alt+Tab switcher and fast window cycling, title-bar buttons and font, focus mode (follow-focus needs wayfire-plugins-extra), edge tiling, and centering new windows.
-- **Workspaces:** how many there are (laid out in `vheight` rows, which you set in `wayfire.ini` or WCM), switching left/right/up/down, to the previously used one or to 1–12, and moving the focused window to any of those.
+- **Workspaces:** how many there are, laid out as the squarest grid they fill exactly (4 make 2×2, 6 make 3×2, 9 make 3×3, and a prime number of them one row), switching left/right/up/down, to the previously used one or to 1–12, and moving the focused window to any of those.
 - **Budgie:** the Super key opens the Budgie menu. Shortcuts for Raven, notifications, the power dialog, screenshots and the run dialog work.
 - **Keyboard:** layouts and their variants, XKB options (from GSettings, else systemd-localed, else `/etc/default/keyboard`), key repeat on/off, delay and rate, and Num Lock at startup.
 - **Mouse and touchpad:** speed, acceleration profile, natural scrolling, left-handed mode, and middle-click emulation. For touchpads also tap-to-click, tap-and-drag, drag lock, scroll method and speed, click method, disable while typing, and disable while a mouse is connected.

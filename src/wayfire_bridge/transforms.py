@@ -371,6 +371,17 @@ def normalize_xkb_options(options_set):
     return normalized
 
 
+def workspace_grid(workspaces):
+    """
+    The squarest grid that holds exactly this many workspaces, as
+    (columns, rows): 4 -> (2, 2), 6 -> (3, 2), 9 -> (3, 3). A prime count
+    has no such grid and becomes one row: 5 -> (5, 1).
+    """
+    workspaces = max(1, int(workspaces))
+    rows = max(r for r in range(1, int(workspaces ** 0.5) + 1) if workspaces % r == 0)
+    return workspaces // rows, rows
+
+
 def split_keyboard_layout(formatted):
     """
     Inverse of format_keyboard_layout: split 'us(dvorak),de' into
