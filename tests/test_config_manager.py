@@ -77,6 +77,46 @@ class ExternalEdits(ConfigManagerTestCase):
         self.assertEqual(read_ini(self.ini)['autostart']['desktop'], 'budgie-desktop')
 
 
+class Writes(ConfigManagerTestCase):
+    """Wayfire reloads wayfire.ini on every write, so writes are kept to those that change it."""
+
+    def written(self):
+        st = self.ini.stat()
+        return st.st_mtime_ns, st.st_ino
+
+    def test_an_unchanged_config_is_not_written(self):
+        self.manager.save()
+        before = self.written()
+        time.sleep(0.01)
+        self.manager.set_value('animate', 'duration', '300ms circle')
+        self.manager.save()
+        self.assertEqual(self.written(), before)
+        self.manager.set_value('animate', 'duration', '650ms circle')
+        self.manager.save()
+        self.assertNotEqual(self.written(), before)
+        self.assertEqual(read_ini(self.ini)['animate']['duration'], '650ms circle')
+
+    def test_held_saves_are_written_once_on_release(self):
+        self.manager.save()
+        before = self.ini.read_text()
+        self.manager.hold_saves()
+        self.manager.set_value('core', 'vwidth', '3')
+        self.manager.save()
+        self.manager.set_value('core', 'vheight', '2')
+        self.manager.save()
+        self.assertEqual(self.ini.read_text(), before)
+        self.manager.release_saves()
+        config = read_ini(self.ini)
+        self.assertEqual((config['core']['vwidth'], config['core']['vheight']), ('3', '2'))
+
+    def test_release_without_a_save_writes_nothing(self):
+        self.manager.save()
+        before = self.written()
+        self.manager.hold_saves()
+        self.manager.release_saves()
+        self.assertEqual(self.written(), before)
+
+
 class PluginList(ConfigManagerTestCase):
 
     initial = "[core]\nplugins = \\\n  alpha \\\n  command\n"

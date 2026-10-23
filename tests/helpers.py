@@ -139,9 +139,12 @@ class BridgeTestCase(unittest.TestCase):
         original = bridge_module.ConfigManager
         bridge_module.ConfigManager = lambda: ConfigManager(self.ini)
         try:
-            return bridge_module.WayfireBridge()
+            bridge = bridge_module.WayfireBridge()
         finally:
             bridge_module.ConfigManager = original
+        # What Wayfire would see 3 s after login
+        bridge.release_startup_saves()
+        return bridge
 
     def tearDown(self):
         # Earlier bridges stay connected to GSettings: keep them from writing

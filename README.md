@@ -79,7 +79,7 @@ This installs:
 
 The launcher sets up the Wayland environment and, on first login, copies the default config to `~/.config/budgie-desktop/wayfire/wayfire.ini`, so Budgie's Wayfire config stays apart from any other Wayfire setup. It starts Wayfire with that config, waits for the Budgie session and stops Wayfire when the session ends. Wayfire's `[autostart]` starts Budgie, the portal and the bridge.
 
-The bridge watches GSettings and writes the matching options into `wayfire.ini`, which Wayfire reloads by itself. It also writes `~/.config/budgie-desktop/wayfire/environment` (keyboard layout, cursor and locale for XWayland and new apps), which the launcher reads at login.
+The bridge watches GSettings and writes the matching options into `wayfire.ini`, which Wayfire reloads by itself. It only writes the file when something changed, and at login it waits a few seconds before its first write, so Wayfire doesn't reload while it is still setting up the monitors. It also writes `~/.config/budgie-desktop/wayfire/environment` (keyboard layout, cursor and locale for XWayland and new apps), which the launcher reads at login.
 
 ## What the bridge syncs
 

@@ -3,6 +3,7 @@ Configuration file management for Wayfire Bridge
 """
 
 import configparser
+import io
 from pathlib import Path
 
 from .logging_config import get_logger
@@ -24,6 +25,9 @@ class ConfigManager:
         self._pending = []
         # (mtime, size) of the file as last read or written by us
         self._disk_stamp = None
+        # While held, saves are collected and written once on release
+        self._held = False
+        self._save_requested = False
 
         # Load existing config or create new one
         if self.config_path.exists():
@@ -192,19 +196,47 @@ class ConfigManager:
                 self._remove_plugin(*args)
         self._ensure_required()
 
+    def hold_saves(self):
+        """Collect saves until release_saves() instead of writing each one."""
+        self._held = True
+
+    def release_saves(self):
+        """Stop holding saves, and write once if any were asked for."""
+        if not self._held:
+            return
+        self._held = False
+        if self._save_requested:
+            self._save_requested = False
+            self.save()
+
     def save(self):
         """Write configuration to wayfire.ini"""
+        if self._held:
+            self._save_requested = True
+            return
         try:
             # Ensure directory exists
             self.config_path.parent.mkdir(parents=True, exist_ok=True)
 
             self._merge_external_changes()
 
-            log.debug("Saving configuration to %s", self.config_path)
+            text = io.StringIO()
+            self.config.write(text)
+            text = text.getvalue()
 
-            with open(self.config_path, 'w') as f:
-                self.config.write(f)
-                f.flush()
+            # Wayfire reloads the file on every write; don't make it reload
+            # an unchanged config
+            try:
+                unchanged = self.config_path.read_text() == text
+            except OSError:
+                unchanged = False
+            if unchanged:
+                log.debug("%s is unchanged, not writing it", self.config_path)
+            else:
+                log.debug("Saving configuration to %s", self.config_path)
+                with open(self.config_path, 'w') as f:
+                    f.write(text)
+                    f.flush()
 
             self._pending.clear()
             self._disk_stamp = self._stamp()

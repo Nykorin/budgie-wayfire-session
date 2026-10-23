@@ -1,7 +1,7 @@
 """Changing a GSettings key updates wayfire.ini while the bridge runs."""
 import unittest
 
-from tests.helpers import METADATA_DIR, BridgeTestCase, option_type, pump, wayfire_metadata
+from tests.helpers import METADATA_DIR, BridgeTestCase, bridge_module, ConfigManager, option_type, pump, wayfire_metadata
 from wayfire_bridge.mappings import GSETTINGS_MAPPINGS
 
 TEST_STRINGS = {
@@ -142,6 +142,34 @@ class Behaviour(BridgeTestCase):
         environment = (self.ini.parent / 'environment').read_text()
         self.assertIn("XCURSOR_THEME='Some Cursor Theme'", environment)
 
+
+
+class StartupWrites(BridgeTestCase):
+    """The startup sync writes wayfire.ini once, after Wayfire has settled."""
+
+    def start_bridge(self):
+        # Change something the sync will set back, then start the bridge
+        # without the helper's immediate release
+        text = self.ini.read_text()
+        self.assertIn('\nvheight = 2\n', text)
+        self.ini.write_text(text.replace('\nvheight = 2\n', '\nvheight = 7\n', 1))
+        self.at_start = self.ini.read_text()
+        original = bridge_module.ConfigManager
+        bridge_module.ConfigManager = lambda: ConfigManager(self.ini)
+        try:
+            return bridge_module.WayfireBridge()
+        finally:
+            bridge_module.ConfigManager = original
+
+    def test_nothing_is_written_until_the_delay_has_passed(self):
+        self.assertEqual(self.ini.read_text(), self.at_start)
+        self.bridge.release_startup_saves()
+        self.assertNotEqual(self.option('core', 'vheight'), '7')
+
+    def test_changes_after_startup_are_written_straight_away(self):
+        self.bridge.release_startup_saves()
+        self.set('org.gnome.desktop.wm.preferences', 'num-workspaces', 6)
+        self.assertEqual((self.option('core', 'vwidth'), self.option('core', 'vheight')), ('3', '2'))
 
 
 class WorkspaceGrid(BridgeTestCase):

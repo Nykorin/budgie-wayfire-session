@@ -36,6 +36,14 @@ from .logging_config import get_logger
 
 log = get_logger(__name__)
 
+# The bridge starts with Wayfire, and Wayfire reloads wayfire.ini whenever
+# it is written. While Wayfire is still starting, outputs can be switched
+# off and on again (Budgie's display daemon applies its saved layout then),
+# and a reload landing while no output is on crashed Wayfire in wlroots
+# (Wayfire 0.11, NVIDIA). So the startup sync's changes are written once,
+# this long after the bridge starts
+STARTUP_SAVE_DELAY_MS = 3000
+
 
 def read_key_value_file(filepath, strip_quotes=False):
     """Read a key=value config file into a dict."""
@@ -87,6 +95,7 @@ class WayfireBridge:
             dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 
         self.config_manager = ConfigManager()
+        self.config_manager.hold_saves()
         self.transforms = TransformFunctions()
         self.settings_objects: Dict[str, Gio.Settings] = {}
         self.dbus_system_bus = None
@@ -162,6 +171,14 @@ class WayfireBridge:
 
         # Perform initial bridge config sync
         self.bridge_config()
+
+        # Write what the startup sync changed once Wayfire has settled
+        GLib.timeout_add(STARTUP_SAVE_DELAY_MS, self.release_startup_saves)
+
+    def release_startup_saves(self):
+        """Write the startup sync's changes; a GLib timeout callback."""
+        self.config_manager.release_saves()
+        return False
 
     def setup_locale1_monitor(self):
         """Setup monitoring of org.freedesktop.locale1 using dbus-python"""
