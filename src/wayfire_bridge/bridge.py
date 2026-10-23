@@ -22,7 +22,7 @@ except ImportError:
 
 from .config_manager import ConfigManager
 from .keybindings import CustomKeybindingsHandler
-from .media_keys import MediaKeysHandler
+from .media_keys import MediaKeysHandler, MEDIA_KEY_MAPPINGS
 from .mappings import GSETTINGS_MAPPINGS
 from .transforms import (
     TransformFunctions,
@@ -517,15 +517,15 @@ class WayfireBridge:
                 terminal = settings.get_string(key)
                 log.debug("Default terminal changed to: %s", terminal)
 
-                # Update the terminal keybinding command
-                current_command = self.config_manager.get_value('command', 'command_launch_terminal')
-                if current_command:
-                    self.config_manager.set_value('command', 'command_launch_terminal', terminal)
-                    log.info("Updated terminal command to: %s", terminal)
+                # The media keys handler owns the terminal binding and picks
+                # an installed command (this setting first)
+                self.media_keys_handler._apply_media_key(
+                    'terminal', MEDIA_KEY_MAPPINGS['terminal']
+                )
 
-                    if not self.delay_config_write:
-                        self.config_manager.save()
-                        self.config_manager.reload_wayfire()
+                if not self.delay_config_write:
+                    self.config_manager.save()
+                    self.config_manager.reload_wayfire()
 
         except Exception:
             log.exception("Error handling default terminal change")

@@ -3,6 +3,8 @@ Media keys handler for Wayfire Bridge
 Handles static media key bindings from gsettings
 """
 
+import shutil
+
 import gi
 
 gi.require_version('Gio', '2.0')
@@ -283,11 +285,8 @@ class MediaKeysHandler:
 
             wayfire_binding = ' | '.join(wayfire_bindings)
 
-            # Resolve command
-            command = self._get_gsetting_command(mapping) or mapping['command']
-            if not command or not command.strip():
-                command = mapping.get('fallback_command', '')
-            if not command or not command.strip():
+            command = self._resolve_command(mapping)
+            if not command:
                 log.debug("%s: no command defined, skipping", gsettings_key)
                 self._remove_media_key_binding(mapping['command_name'])
                 return
@@ -311,6 +310,31 @@ class MediaKeysHandler:
 
         except Exception:
             log.exception("Error applying media key %s", gsettings_key)
+
+    def _resolve_command(self, mapping: dict) -> str:
+        """Pick the first candidate command whose program is installed.
+
+        Candidates in order: the 'command_gsetting' value, 'command',
+        'fallback_command'. If none is installed the first one is still
+        used, so the binding appears once the program is installed.
+        """
+        candidates = [
+            c.strip() for c in (
+                self._get_gsetting_command(mapping),
+                mapping['command'],
+                mapping.get('fallback_command', ''),
+            ) if c and c.strip()
+        ]
+        if not candidates:
+            return ''
+        for command in candidates:
+            if shutil.which(command.split()[0]):
+                return command
+        log.warning(
+            "%s: none of %s is installed; binding it to %r anyway",
+            mapping['command_name'], candidates, candidates[0],
+        )
+        return candidates[0]
 
     def _get_gsetting_command(self, mapping: dict) -> str:
         """Read the command from the mapping's 'command_gsetting', if any."""
