@@ -120,6 +120,12 @@ To watch the bridge in detail, stop it and run it by hand with debug output:
     pkill -f wayfire-bridge
     /usr/libexec/budgie-desktop/wayfire-bridge --verbose
 
+## Tests
+
+    tests/run.sh
+
+The tests use Python's `unittest`, nothing to install beyond the bridge's own dependencies. GSettings are kept in memory and every test works on temporary files, so your settings and `~/.config` are never touched. They cover the value conversions, every GSettings mapping and handler syncing into `wayfire.ini`, cleanup of configs from older versions, keeping edits made in WCM, the shipped `wayfire.ini` and the launcher. Tests that need Wayfire's option metadata (`/usr/share/wayfire/metadata`), libevdev or Budgie's GSettings schemas are skipped where those aren't installed. `tests/run.sh -v` lists every test; `tests/run.sh -k magnifier` runs the matching ones.
+
 ## Known limitations
 
 - Tested only on CachyOS with Wayfire 0.11 and Budgie 10.10.
@@ -144,6 +150,7 @@ src/
     ├── budgie_wm_actions.py   # Budgie actions (Raven, screenshots, power dialog, ...)
     ├── keybindings.py         # custom shortcuts
     └── logging_config.py      # logging setup
+tests/                         # unittest suite, run with tests/run.sh
 ```
 
 ## License
