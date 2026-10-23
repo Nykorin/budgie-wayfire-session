@@ -411,23 +411,27 @@ class MediaKeysHandler:
             return ''
 
     def _extract_keybindings(self, gsettings_key: str, value) -> list:
-        """Normalise a raw gsettings value to a list of binding strings."""
+        """Normalise a raw gsettings value to a list of binding strings.
+
+        Includes the key's '-static' bindings (the keyboard's dedicated
+        hardware keys, e.g. XF86AudioRaiseVolume) alongside the user's own
+        shortcut: like GNOME, those keep working when a custom one is set.
+        """
         if isinstance(value, list):
             keybindings = [k for k in value if k and k not in ('', 'disabled')]
 
-            if not keybindings:
-                # Try the -static variant if it exists
-                static_key = f"{gsettings_key}-static"
-                schema_obj = self.settings.get_property('settings-schema')
-                if schema_obj and schema_obj.has_key(static_key):
-                    try:
-                        static_value = self.settings.get_value(static_key).unpack()
-                        if isinstance(static_value, list):
-                            keybindings = [k for k in static_value if k and k not in ('', 'disabled')]
-                            if keybindings:
-                                log.debug("Using %s (static fallback): %s", static_key, keybindings)
-                    except Exception:
-                        log.debug("Could not read %s", static_key)
+            static_key = f"{gsettings_key}-static"
+            schema_obj = self.settings.get_property('settings-schema')
+            if schema_obj and schema_obj.has_key(static_key):
+                try:
+                    static_value = self.settings.get_value(static_key).unpack()
+                    if isinstance(static_value, list):
+                        keybindings += [
+                            k for k in static_value
+                            if k and k != 'disabled' and k not in keybindings
+                        ]
+                except Exception:
+                    log.debug("Could not read %s", static_key)
 
             return keybindings
 

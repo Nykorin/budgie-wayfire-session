@@ -24,6 +24,7 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 - **src/wayfire_bridge/mappings.py, src/wayfire.ini:** Syncing night light to a `[gamma]` section: no Wayfire plugin reads it, so it never did anything *(Claude, directed by user)*
 
 ### Fixed
+- **src/wayfire_bridge/media_keys.py:** The keyboard's own media keys (a key's `-static` bindings, like `XF86AudioRaiseVolume`) were only bound while no custom shortcut was set, so giving volume-up a shortcut disabled the volume key. Both are now bound, as in GNOME *(Claude)*
 - **src/wayfire_bridge/transforms.py:** Wayfire resolves key names with libevdev, which rejects kernel aliases, so `XF86LaunchB` as `KEY_DASHBOARD` was never bound; it is `KEY_ALL_APPLICATIONS`. An XF86 keysym with no evdev key (`XF86Hibernate`, `XF86AudioRepeat`) is skipped instead of becoming an invalid `KEY_XF86…` name *(Claude)*
 - **src/wayfire_bridge/mappings.py, src/wayfire_bridge/transforms.py:** GNOME's `custom` mouse and touchpad acceleration profile was passed through, which Wayfire rejects (it accepts `default`, `none`, `adaptive`, `flat`); it falls back to `default` *(Claude)*
 - **src/wayfire_bridge/mappings.py:** Mouse natural scroll was written to `natural_scroll`, the touchpad's option, so it flipped the touchpad; it is `mouse_natural_scroll`, and touchpad natural scroll (written to the nonexistent `touchpad_natural_scroll`) is `natural_scroll` *(Claude)*
