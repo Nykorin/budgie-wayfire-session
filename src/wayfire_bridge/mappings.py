@@ -96,26 +96,33 @@ GSETTINGS_MAPPINGS = {
     },
 
     # --- [switcher] - visual Alt-Tab style switcher ---
-    # switch-applications and switch-windows both map to the visual switcher
+    # switch-applications and switch-windows both map to the visual switcher.
+    # [switcher] and [fast-switcher] options are Wayfire "key" options, not
+    # activators: they take exactly one binding, so 'single_binding' makes the
+    # bridge pick one instead of writing a "|" list Wayfire would reject.
     ('org.gnome.desktop.wm.keybindings', 'switch-applications'): {
         'section': 'switcher',
         'option': 'next_view',
-        'transform': 'keybinding'
+        'transform': 'keybinding',
+        'single_binding': True,
     },
     ('org.gnome.desktop.wm.keybindings', 'switch-applications-backward'): {
         'section': 'switcher',
         'option': 'prev_view',
-        'transform': 'keybinding'
+        'transform': 'keybinding',
+        'single_binding': True,
     },
     ('org.gnome.desktop.wm.keybindings', 'switch-windows'): {
         'section': 'switcher',
         'option': 'next_view',
-        'transform': 'keybinding'
+        'transform': 'keybinding',
+        'single_binding': True,
     },
     ('org.gnome.desktop.wm.keybindings', 'switch-windows-backward'): {
         'section': 'switcher',
         'option': 'prev_view',
-        'transform': 'keybinding'
+        'transform': 'keybinding',
+        'single_binding': True,
     },
 
     # --- [fast-switcher] - instant Alt-Escape style switcher ---
@@ -123,12 +130,14 @@ GSETTINGS_MAPPINGS = {
     ('org.gnome.desktop.wm.keybindings', 'cycle-windows'): {
         'section': 'fast-switcher',
         'option': 'activate',
-        'transform': 'keybinding'
+        'transform': 'keybinding',
+        'single_binding': True,
     },
     ('org.gnome.desktop.wm.keybindings', 'cycle-windows-backward'): {
         'section': 'fast-switcher',
         'option': 'activate_backward',
-        'transform': 'keybinding'
+        'transform': 'keybinding',
+        'single_binding': True,
     },
 
     # --- [vswitch] - workspace switching ---

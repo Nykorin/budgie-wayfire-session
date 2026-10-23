@@ -108,6 +108,13 @@ class WayfireBridge:
             if len(sources) > 1
         }
 
+        # Wayfire "key" options take one binding, not a "|" list
+        self.single_binding_targets = {
+            (mapping['section'], mapping['option'])
+            for mapping in GSETTINGS_MAPPINGS.values()
+            if mapping.get('single_binding')
+        }
+
         # Initialise handlers
         self.keybindings_handler = CustomKeybindingsHandler(
             self.config_manager,
@@ -578,6 +585,9 @@ class WayfireBridge:
             elif (section, option) in self.shared_targets:
                 transformed_value = self._merged_keybinding(section, option)
 
+            if (section, option) in self.single_binding_targets:
+                transformed_value = self._pick_single_binding(transformed_value)
+
             # Special handling for xkb_options - use fallback if empty
             elif option == 'xkb_options' and not transformed_value:
                 # GSettings is empty, use the priority system
@@ -624,6 +634,21 @@ class WayfireBridge:
                 if binding and binding not in bindings:
                     bindings.append(binding)
         return ' | '.join(bindings)
+
+    @staticmethod
+    def _pick_single_binding(value: str) -> str:
+        """Reduce a "|" list to one binding for options that only take one.
+
+        Prefers an <alt> binding, matching Wayfire's own switcher defaults
+        (Alt-Tab, Alt-Esc), and otherwise keeps the first one.
+        """
+        bindings = [b.strip() for b in value.split('|') if b.strip()]
+        if not bindings:
+            return ''
+        chosen = next((b for b in bindings if '<alt>' in b), bindings[0])
+        if len(bindings) > 1:
+            log.info("Wayfire accepts one binding here, using %s of %s", chosen, bindings)
+        return chosen
 
     def _on_setting_changed(self, schema: str, key: str, section: str,
                             option: str, transform):
