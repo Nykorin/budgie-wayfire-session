@@ -3,6 +3,7 @@ Media keys handler for Wayfire Bridge
 Handles static media key bindings from gsettings
 """
 
+import os
 import shutil
 
 import gi
@@ -13,6 +14,23 @@ from gi.repository import Gio
 from .logging_config import get_logger
 
 log = get_logger(__name__)
+
+# Where Wayfire looks for plugins: WAYFIRE_PLUGIN_PATH, then its libdir
+# (which differs between Arch, Fedora, Debian/Ubuntu multiarch and /usr/local)
+_PLUGIN_DIRS = [
+    *filter(None, os.environ.get('WAYFIRE_PLUGIN_PATH', '').split(':')),
+    '/usr/lib/wayfire',
+    '/usr/lib64/wayfire',
+    '/usr/lib/x86_64-linux-gnu/wayfire',
+    '/usr/lib/aarch64-linux-gnu/wayfire',
+    '/usr/local/lib/wayfire',
+    '/usr/local/lib64/wayfire',
+]
+
+
+def plugin_installed(name: str) -> bool:
+    """Return True if a Wayfire plugin library named lib<name>.so exists."""
+    return any(os.path.exists(os.path.join(d, f'lib{name}.so')) for d in _PLUGIN_DIRS)
 
 
 # Mapping of media key gsettings keys to Wayfire commands
@@ -62,23 +80,30 @@ MEDIA_KEY_MAPPINGS = {
         'fallback_command': '',
         'plugin': None,
     },
+    # The mag plugin (wayfire-plugins-extra) has its own toggle activator, so
+    # the binding goes to [mag] toggle instead of a [command] entry
     'magnifier': {
         'command_name': 'toggle_magnifier',
-        'command': 'wf-mag',
+        'command': '',
         'fallback_command': '',
         'plugin': 'mag',
+        'activator': ('mag', 'toggle'),
     },
+    # mag has a fixed zoom_level and zoom zooms with modifier+scroll only:
+    # neither plugin has zoom in/out bindings
     'magnifier-zoom-in': {
         'command_name': 'magnifier_zoom_in',
-        'command': 'wf-mag zoom-in',
+        'command': '',
         'fallback_command': '',
-        'plugin': 'mag',
+        'unsupported': 'Wayfire has no magnifier zoom-in binding (use <super> + scroll with the zoom plugin)',
+        'plugin': None,
     },
     'magnifier-zoom-out': {
         'command_name': 'magnifier_zoom_out',
-        'command': 'wf-mag zoom-out',
+        'command': '',
         'fallback_command': '',
-        'plugin': 'mag',
+        'unsupported': 'Wayfire has no magnifier zoom-out binding (use <super> + scroll with the zoom plugin)',
+        'plugin': None,
     },
     'screenreader': {
         'command_name': 'toggle_screenreader',
@@ -265,6 +290,19 @@ class MediaKeysHandler:
             # Normalise to a list of non-empty binding strings
             keybindings = self._extract_keybindings(gsettings_key, value)
 
+            if mapping.get('activator'):
+                # Plugin-owned binding; drop any [command] entry from older
+                # versions (e.g. the wf-mag script)
+                self._remove_media_key_binding(mapping['command_name'])
+                self._apply_plugin_activator(gsettings_key, mapping, keybindings)
+                return
+
+            if mapping.get('unsupported'):
+                self._remove_media_key_binding(mapping['command_name'])
+                if keybindings:
+                    log.info("%s: %s", gsettings_key, mapping['unsupported'])
+                return
+
             if not keybindings:
                 log.debug("%s: no binding set", gsettings_key)
                 self._remove_media_key_binding(mapping['command_name'])
@@ -310,6 +348,28 @@ class MediaKeysHandler:
 
         except Exception:
             log.exception("Error applying media key %s", gsettings_key)
+
+    def _apply_plugin_activator(self, gsettings_key: str, mapping: dict, keybindings: list):
+        """Bind a media key to a plugin's own activator option (e.g. [mag] toggle)."""
+        section, option = mapping['activator']
+        plugin = mapping['plugin']
+
+        if not plugin_installed(plugin):
+            log.warning(
+                "%s: the %s plugin is not installed (wayfire-plugins-extra), "
+                "leaving the key unbound", gsettings_key, plugin,
+            )
+            return
+
+        wayfire_binding = ' | '.join(
+            wb for kb in keybindings if (wb := self.transforms.convert_keybinding(kb))
+        )
+        # 'disabled' rather than removing the option, which would fall back to
+        # the plugin's own default binding
+        self.config_manager.set_value(section, option, wayfire_binding or 'disabled')
+        self.config_manager.ensure_plugin(plugin)
+        log.debug("Applied media key: %s -> [%s] %s = %s",
+                  gsettings_key, section, option, wayfire_binding or 'disabled')
 
     def _resolve_command(self, mapping: dict) -> str:
         """Pick the first candidate command whose program is installed.

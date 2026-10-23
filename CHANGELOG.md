@@ -13,6 +13,9 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 - **src/wayfire-bridge, src/systemd/wayfire-bridge.service:** Only one bridge runs at a time: a second one, from `[autostart]` and the systemd unit both, exits on a lock in `$XDG_RUNTIME_DIR/wayfire-bridge.lock` instead of fighting the first over `wayfire.ini`; the unit may write `%t` for it *(Claude)*
 
 ### Changed
+- **src/wayfire_bridge/media_keys.py:** The magnifier key is bound to the mag plugin's own `[mag] toggle` (`disabled` when the key is cleared, so mag's default doesn't apply) and the plugin is loaded, but only if `libmag.so` is found where Wayfire looks for plugins (`WAYFIRE_PLUGIN_PATH`, then the usual libdirs); otherwise a warning says to install wayfire-plugins-extra. Old `[command]` magnifier entries are removed *(Claude, directed by user)*
+- **src/wayfire_bridge/media_keys.py:** The magnifier zoom-in and zoom-out keys are left unbound with an info line, as neither mag (fixed `zoom_level`) nor zoom (Super+scroll) has zoom bindings *(Claude, directed by user)*
+- **README.md, src/wayfire.ini:** The magnifier notes *(Claude, directed by user)*
 - **src/wayfire_bridge/bridge.py:** Configs copied from the old shipped `wayfire.ini` keep its broken close, maximize, minimize and move-left/right `[command]` entries; on startup the bridge removes them, matching on their nonexistent commands (`wm-actions …`, `vswitch-move …`) so entries a user wrote are left alone *(Claude)*
 - **src/wayfire_bridge/mappings.py:** `maximize` and `unmaximize` go to `[grid] slot_c` and `restore`, which fill the screen and restore it; only `toggle-maximized` uses `[wm-actions] toggle_maximize`. Merged into the toggle, Super+Up was bound by both the toggle and grid's `slot_c` default, and Super+Down maximized an unmaximized window *(Claude)*
 - **src/wayfire_bridge/media_keys.py, src/wayfire_bridge/bridge.py:** A media key's command is the first of its candidates whose program is installed: the `command_gsetting` value (for the terminal, the default terminal), then `command`, then `fallback_command`; with none installed the first is bound anyway and a warning names them. The default-terminal handler goes through the same code instead of writing the setting's value as it is *(Claude, directed by user)*
@@ -25,6 +28,7 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 - **src/wayfire_bridge/media_keys.py:** The terminal shortcut runs the default terminal from `org.gnome.desktop.default-applications.terminal exec` (falling back to `x-terminal-emulator`), so changing the shortcut no longer resets the command the default-terminal handler wrote *(Claude)*
 
 ### Removed
+- **src/wf-mag:** The magnifier helper: it called a `wf-msg` command Wayfire doesn't have, and meson never installed it *(Claude, directed by user)*
 - **src/wayfire_bridge/transforms.py:** The unused `focus_mode` and `num_workspaces` transforms *(Claude)*
 - **src/wayfire_bridge/mappings.py:** A second, identical `switch-to-workspace-last` entry *(Claude)*
 - **src/wayfire_bridge/bridge.py:** A second placement-mode sync at startup, the same as the one just before it *(Claude)*

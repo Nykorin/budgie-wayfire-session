@@ -72,8 +72,7 @@ Email client
 File manager
 Calculator
 Help browser
-TBD Magnifier toggle (requires mag plugin)
-TBD Magnifier zoom in/out
+Magnifier toggle (mag plugin from wayfire-plugins-extra; zoom in/out has no Wayfire equivalent)
 Screen reader toggle
 Lock screen
 
