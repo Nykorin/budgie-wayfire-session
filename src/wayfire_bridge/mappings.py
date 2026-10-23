@@ -17,11 +17,6 @@ GSETTINGS_MAPPINGS = {
         'option': 'cursor_size',
         'transform': 'int'
     },
-    ('org.gnome.desktop.interface', 'gtk-theme'): {
-        'section': 'core',
-        'option': 'gtk_theme',
-        'transform': 'str'
-    },
 
     # ==========================================================================
     # Window Manager Preferences
@@ -32,7 +27,7 @@ GSETTINGS_MAPPINGS = {
         'transform': 'button_layout'
     },
     ('org.gnome.desktop.wm.preferences', 'num-workspaces'): {
-        'section': 'vswitch',
+        'section': 'core',
         'option': 'vwidth',
         'transform': 'int'
     },

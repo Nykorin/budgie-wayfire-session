@@ -126,6 +126,10 @@ class ConfigManager:
         if section in self.config and option in self.config[section]:
             del self.config[section][option]
 
+    def remove_section(self, section: str):
+        """Remove a whole configuration section"""
+        self.config.remove_section(section)
+
     def has_option(self, section: str, option: str) -> bool:
         """Check if an option exists"""
         return section in self.config and option in self.config[section]

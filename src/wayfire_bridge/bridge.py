@@ -134,9 +134,8 @@ class WayfireBridge:
         # Setup peripheral monitoring with special handlers
         self.setup_peripheral_monitoring()
 
-        # Setup mutter and panel settings
+        # Setup mutter settings
         self.setup_mutter_settings()
-        self.setup_panel_settings()
 
         # Setup default terminal monitoring
         self.setup_default_terminal()
@@ -340,18 +339,6 @@ class WayfireBridge:
     def _remove_plugin(self, plugin_name: str):
         self.config_manager.remove_plugin(plugin_name)
 
-    def setup_panel_settings(self):
-        """Setup monitoring for panel settings"""
-        try:
-            source = Gio.SettingsSchemaSource.get_default()
-            if source.lookup('com.solus-project.budgie-panel', True):
-                panel_settings = Gio.Settings.new('com.solus-project.budgie-panel')
-                panel_settings.connect('changed::notification-position', self._on_panel_changed)
-                self.settings_objects['com.solus-project.budgie-panel'] = panel_settings
-                log.info("Panel settings monitoring enabled")
-        except Exception:
-            log.warning("Could not setup panel settings monitoring", exc_info=True)
-
     def setup_default_terminal(self):
         """Setup monitoring for default terminal"""
         try:
@@ -491,35 +478,6 @@ class WayfireBridge:
         if not self.delay_config_write:
             self.config_manager.save()
             self.config_manager.reload_wayfire()
-
-    def _on_panel_changed(self, settings, key):
-        """Handle panel settings changes"""
-        try:
-            if key == 'notification-position':
-                position = settings.get_string(key)
-                log.debug("Panel notification-position changed to: %s", position)
-
-                # Map Budgie notification positions
-                position_map = {
-                    'BUDGIE_NOTIFICATION_POSITION_TOP_LEFT': ('top', 'left'),
-                    'BUDGIE_NOTIFICATION_POSITION_TOP_RIGHT': ('top', 'right'),
-                    'BUDGIE_NOTIFICATION_POSITION_BOTTOM_LEFT': ('bottom', 'left'),
-                    'BUDGIE_NOTIFICATION_POSITION_BOTTOM_RIGHT': ('bottom', 'right'),
-                }
-
-                if position in position_map:
-                    v_pos, h_pos = position_map[position]
-                    log.debug("Notification position: vertical=%s, horizontal=%s", v_pos, h_pos)
-                    # Store for potential window rules configuration
-                    self.config_manager.set_value('notifications', 'vertical_position', v_pos)
-                    self.config_manager.set_value('notifications', 'horizontal_position', h_pos)
-
-                    if not self.delay_config_write:
-                        self.config_manager.save()
-                        self.config_manager.reload_wayfire()
-
-        except Exception:
-            log.exception("Error handling panel settings change")
 
     def _on_default_terminal_changed(self, settings, key):
         """Handle default terminal change"""
@@ -904,6 +862,16 @@ class WayfireBridge:
         # Ensure all required plugins are in [core] plugins list
         self.config_manager.ensure_wm_plugins()
 
+        # Drop entries written by older bridge versions that Wayfire ignores
+        self.config_manager.remove_section('notifications')
+        self.config_manager.remove_option('core', 'gtk_theme')
+        # The workspace grid lives in [core], not [vswitch]; carry vheight over
+        vheight = self.config_manager.get_value('vswitch', 'vheight')
+        if vheight is not None and not self.config_manager.has_option('core', 'vheight'):
+            self.config_manager.set_value('core', 'vheight', vheight)
+        self.config_manager.remove_option('vswitch', 'vwidth')
+        self.config_manager.remove_option('vswitch', 'vheight')
+
         # Log layout switching status so it's visible in journal
         layout = self.get_keyboard_layout()
         if ',' in layout:
@@ -991,14 +959,6 @@ class WayfireBridge:
                         self._on_mutter_changed(mutter, key)
                     except Exception:
                         log.debug("Could not sync mutter key %s", key, exc_info=True)
-
-            # Sync panel settings
-            if 'com.solus-project.budgie-panel' in self.settings_objects:
-                panel = self.settings_objects['com.solus-project.budgie-panel']
-                try:
-                    self._on_panel_changed(panel, 'notification-position')
-                except Exception:
-                    log.debug("Could not sync panel notification-position", exc_info=True)
 
             # Sync default terminal
             if 'org.gnome.desktop.default-applications.terminal' in self.settings_objects:

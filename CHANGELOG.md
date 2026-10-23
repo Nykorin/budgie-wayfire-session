@@ -9,16 +9,21 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 ## [2026-10-22]
 
 ### Added
+- **src/wayfire_bridge/config_manager.py:** `remove_section` *(Claude)*
 - **src/wayfire-bridge, src/systemd/wayfire-bridge.service:** Only one bridge runs at a time: a second one, from `[autostart]` and the systemd unit both, exits on a lock in `$XDG_RUNTIME_DIR/wayfire-bridge.lock` instead of fighting the first over `wayfire.ini`; the unit may write `%t` for it *(Claude)*
 
 ### Changed
+- **src/wayfire_bridge/bridge.py:** On startup, configs written by older versions lose the `[notifications]` section and `[core] gtk_theme`, and `[vswitch] vwidth`/`vheight` are removed, a `vheight` set there moving to `[core]` *(Claude)*
 - **src/wayfire.ini:** The `[command]` and `[vswitch]` comments and the commented-out example bindings give Wayfire's binding format, modifiers first (`<ctrl> <alt> KEY_T`), instead of `KEY_T CTRL ALT` *(Claude, directed by user)*
 - **src/wayfire_bridge/media_keys.py:** The terminal shortcut runs the default terminal from `org.gnome.desktop.default-applications.terminal exec` (falling back to `x-terminal-emulator`), so changing the shortcut no longer resets the command the default-terminal handler wrote *(Claude)*
 
 ### Removed
+- **src/wayfire_bridge/bridge.py:** Writing Budgie's notification position to a `[notifications]` section, which isn't a Wayfire section *(Claude)*
+- **src/wayfire_bridge/mappings.py, src/wayfire.ini:** `gtk-theme` to `[core] gtk_theme`, which isn't a Wayfire option *(Claude)*
 - **src/wayfire.ini:** The `[command]` entries for close, maximize, minimize and moving a window to the left/right workspace: their bindings put the key before the modifiers (`KEY_Q ALT`) and their commands (`wm-actions close`, `vswitch-move left`) don't exist, so they did nothing. The bridge writes the real bindings to `[core]`, `[wm-actions]` and `[vswitch]` *(Claude, directed by user)*
 
 ### Fixed
+- **src/wayfire_bridge/mappings.py, src/wayfire.ini:** The workspace count was written to `[vswitch] vwidth`, but Wayfire reads the workspace grid (`vwidth`, `vheight`) from `[core]` *(Claude)*
 - **src/wayfire-bridge:** Logging was never set up and `-v` was never read, so `-v`/`--verbose` and `WAYFIRE_BRIDGE_VERBOSE=1` did nothing; the entry point now parses its arguments and calls `setup_logging` *(Claude)*
 - **src/systemd/wayfire-bridge.service:** `ExecStart` pointed at `/usr/bin/wayfire-bridge`, but meson installs it to `/usr/libexec/budgie-desktop/`; the `Documentation=` man page doesn't exist and is gone *(Claude)*
 - **src/wayfire_bridge/bridge.py:** Several GSettings keys write the same Wayfire option (`switch-applications` and `switch-windows` both `[switcher] next_view`; `maximize`, `unmaximize` and `toggle-maximized` all `toggle_maximize`), and the last one applied won: an empty `switch-windows` blanked Alt+Tab, and `<Super>Up` was lost to `<Alt>F10`. Their bindings are now merged into one `|` list *(Claude)*
