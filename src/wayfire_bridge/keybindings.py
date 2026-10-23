@@ -85,7 +85,6 @@ class CustomKeybindingsHandler:
 
             if previous_paths or current_paths:
                 self.config_manager.save()
-                self.config_manager.reload_wayfire()
 
         except Exception:
             log.exception("Error syncing custom keybindings")
@@ -165,7 +164,6 @@ class CustomKeybindingsHandler:
 
             if save:
                 self.config_manager.save()
-                self.config_manager.reload_wayfire()
 
         except Exception:
             log.exception("Error updating custom keybinding %s", path)

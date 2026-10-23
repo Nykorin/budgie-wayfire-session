@@ -184,4 +184,3 @@ class BudgieWMActionsHandler:
         log.debug("Budgie WM action changed: %s", key)
         self._apply_action_key(key, mapping, settings)
         self.config_manager.save()
-        self.config_manager.reload_wayfire()

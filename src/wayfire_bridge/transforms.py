@@ -311,55 +311,6 @@ class TransformFunctions:
         return 30  # Default fallback
 
     @staticmethod
-    def xkb_layout(value: Any) -> str:
-        """Transform GNOME input sources to XKB layout
-
-        Note: This is only called for GSettings sources.
-        If sources is empty, return empty string so bridge can use
-        the priority system (locale1 or /etc/default/keyboard).
-        """
-        try:
-            if not value:
-                # Empty sources - return empty so bridge uses fallback
-                return ''
-
-            layouts = []
-            variants = []
-
-            for source in value:
-                if len(source) >= 2 and source[0] == 'xkb':
-                    layout_str = source[1]
-                    # Check if variant is specified (e.g., 'us+dvorak')
-                    if '+' in layout_str:
-                        layout, variant = layout_str.split('+', 1)
-                        layouts.append(layout)
-                        variants.append(variant)
-                    else:
-                        layouts.append(layout_str)
-
-            if layouts:
-                return ','.join(layouts)
-
-            # No xkb sources found - return empty for fallback
-            return ''
-
-        except Exception as e:
-            print(f"Error parsing xkb layout: {e}")
-            return ''
-
-    @staticmethod
-    def xkb_options(value: Any) -> str:
-        """Transform XKB options array to string"""
-        # GNOME format: ['ctrl:nocaps', 'compose:ralt']
-        # Wayfire format: ctrl:nocaps,compose:ralt
-        try:
-            if isinstance(value, list) and value:
-                return ','.join(value)
-            return ''
-        except Exception:
-            return ''
-
-    @staticmethod
     def placement_mode(value: bool) -> str:
         """Transform mutter center-new-windows boolean to Wayfire place mode.
 

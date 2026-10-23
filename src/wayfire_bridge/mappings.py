@@ -512,12 +512,12 @@ GSETTINGS_MAPPINGS = {
     ('org.gnome.desktop.input-sources', 'sources'): {
         'section': 'input',
         'option': 'xkb_layout',
-        'transform': 'xkb_layout'
+        'transform': 'str'   # computed by the bridge, see _apply_setting
     },
     ('org.gnome.desktop.input-sources', 'xkb-options'): {
         'section': 'input',
         'option': 'xkb_options',
-        'transform': 'xkb_options'
+        'transform': 'str'   # computed by the bridge, see _apply_setting
     },
 
     # Night light is not mapped: Wayfire has no gamma plugin. budgie-daemon

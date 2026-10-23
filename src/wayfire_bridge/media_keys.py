@@ -33,8 +33,14 @@ def plugin_installed(name: str) -> bool:
     return any(os.path.exists(os.path.join(d, f'lib{name}.so')) for d in _PLUGIN_DIRS)
 
 
-# Mapping of media key gsettings keys to Wayfire commands
-# Format: gsetting_key: {command_name, command, fallback_command, plugin}
+# Mapping of media key gsettings keys to Wayfire bindings
+# Each entry has 'command_name' (the [command] binding_/command_ suffix) and:
+#   'command', 'fallback_command'  candidates, first installed one is used
+#   'command_gsetting'             (schema, key) whose value is tried first
+#   'plugin' + 'activator'         bind a plugin's own activator option instead
+#   'unsupported'                  no Wayfire equivalent, logged and unbound
+# Keys without a command (help, search, playback, accessibility toggles, ...)
+# are left out: there is nothing in Wayfire to bind them to.
 MEDIA_KEY_MAPPINGS = {
     'terminal': {
         'command_name': 'launch_terminal',
@@ -42,50 +48,31 @@ MEDIA_KEY_MAPPINGS = {
         'fallback_command': 'xfce4-terminal',
         # User's chosen terminal takes precedence over 'command'
         'command_gsetting': ('org.gnome.desktop.default-applications.terminal', 'exec'),
-        'plugin': None,
     },
     'www': {
         'command_name': 'launch_browser',
         'command': 'x-www-browser',
         'fallback_command': 'firefox',
-        'plugin': None,
     },
     'email': {
         'command_name': 'launch_email',
         'command': 'xdg-email',
         'fallback_command': 'thunderbird',
-        'plugin': None,
     },
     'home': {
         'command_name': 'launch_file_manager',
         'command': 'xdg-open ~',
         'fallback_command': 'nemo',
-        'plugin': None,
     },
     'calculator': {
         'command_name': 'launch_calculator',
         'command': 'mate-calc',
         'fallback_command': 'gnome-calculator',
-        'plugin': None,
-    },
-    'help': {
-        'command_name': 'launch_help',
-        'command': '',
-        'fallback_command': '',
-        'plugin': None,
-    },
-    'search': {
-        'command_name': 'launch_search',
-        'command': '',
-        'fallback_command': '',
-        'plugin': None,
     },
     # The mag plugin (wayfire-plugins-extra) has its own toggle activator, so
     # the binding goes to [mag] toggle instead of a [command] entry
     'magnifier': {
         'command_name': 'toggle_magnifier',
-        'command': '',
-        'fallback_command': '',
         'plugin': 'mag',
         'activator': ('mag', 'toggle'),
     },
@@ -93,23 +80,11 @@ MEDIA_KEY_MAPPINGS = {
     # neither plugin has zoom in/out bindings
     'magnifier-zoom-in': {
         'command_name': 'magnifier_zoom_in',
-        'command': '',
-        'fallback_command': '',
         'unsupported': 'Wayfire has no magnifier zoom-in binding (use <super> + scroll with the zoom plugin)',
-        'plugin': None,
     },
     'magnifier-zoom-out': {
         'command_name': 'magnifier_zoom_out',
-        'command': '',
-        'fallback_command': '',
         'unsupported': 'Wayfire has no magnifier zoom-out binding (use <super> + scroll with the zoom plugin)',
-        'plugin': None,
-    },
-    'screenreader': {
-        'command_name': 'toggle_screenreader',
-        'command': '',
-        'fallback_command': '',
-        'plugin': None,
     },
     'screensaver': {
         'command_name': 'lock_screen',
@@ -119,122 +94,34 @@ MEDIA_KEY_MAPPINGS = {
             '/org/buddiesofbudgie/Screenlock '
             'org.buddiesofbudgie.BudgieScreenlock.Lock'
         ),
-        'fallback_command': '',
-        'plugin': None,
-    },
-    'decrease-text-size': {
-        'command_name': 'decrease_text_size',
-        'command': '',
-        'fallback_command': '',
-        'plugin': None,
-    },
-    'toggle-contrast': {
-        'command_name': 'toggle_contrast',
-        'command': '',
-        'fallback_command': '',
-        'plugin': None,
-    },
-    'increase-text-size': {
-        'command_name': 'increase_text_size',
-        'command': '',
-        'fallback_command': '',
-        'plugin': None,
-    },
-    'on-screen-keyboard': {
-        'command_name': 'on_screen_keyboard',
-        'command': '',
-        'fallback_command': '',
-        'plugin': None,
     },
     'control-center': {
         'command_name': 'on_control_center',
         'command': 'budgie-desktop-settings',
-        'fallback_command': '',
-        'plugin': None,
-    },
-    'eject': {
-        'command_name': 'on_eject',
-        'command': '',
-        'fallback_command': '',
-        'plugin': None,
-    },
-    'media': {
-        'command_name': 'on_media',
-        'command': '',
-        'fallback_command': '',
-        'plugin': None,
-    },
-    'mic-mute': {
-        'command_name': 'on_mic_mute',
-        'command': '',
-        'fallback_command': '',
-        'plugin': None,
-    },
-    'next': {
-        'command_name': 'on_next',
-        'command': '',
-        'fallback_command': '',
-        'plugin': None,
-    },
-    'pause': {
-        'command_name': 'on_pause',
-        'command': '',
-        'fallback_command': '',
-        'plugin': None,
-    },
-    'play': {
-        'command_name': 'on_play',
-        'command': '',
-        'fallback_command': '',
-        'plugin': None,
-    },
-    'previous': {
-        'command_name': 'on_previous',
-        'command': '',
-        'fallback_command': '',
-        'plugin': None,
-    },
-    'stop': {
-        'command_name': 'on_stop',
-        'command': '',
-        'fallback_command': '',
-        'plugin': None,
     },
     'volume-down': {
         'command_name': 'on_volume_down',
         'command': 'wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-',
-        'fallback_command': '',
-        'plugin': None,
     },
     'volume-mute': {
         'command_name': 'on_volume_mute',
         'command': 'wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle',
-        'fallback_command': '',
-        'plugin': None,
     },
     'volume-up': {
         'command_name': 'on_volume_up',
         'command': 'wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+',
-        'fallback_command': '',
-        'plugin': None,
     },
     'logout': {
         'command_name': 'on_logout',
         'command': 'budgie-session-quit',
-        'fallback_command': '',
-        'plugin': None,
     },
     'keyboard-brightness-down': {
         'command_name': 'on_keyboard_brightness_down',
         'command': 'budgie-brightness-helper --down',
-        'fallback_command': '',
-        'plugin': None,
     },
     'keyboard-brightness-up': {
         'command_name': 'on_keyboard_brightness_up',
         'command': 'budgie-brightness-helper --up',
-        'fallback_command': '',
-        'plugin': None,
     },
 }
 
@@ -335,16 +222,7 @@ class MediaKeysHandler:
             self.config_manager.set_value('command', binding_option, wayfire_binding)
             self.config_manager.set_value('command', command_option, command)
 
-            if mapping.get('plugin'):
-                log.debug(
-                    "Applied media key: %s -> %s (requires %s plugin)",
-                    gsettings_key, mapping['command_name'], mapping['plugin'],
-                )
-            else:
-                log.debug(
-                    "Applied media key: %s = %s -> %s",
-                    gsettings_key, wayfire_binding, command,
-                )
+            log.debug("Applied media key: %s = %s -> %s", gsettings_key, wayfire_binding, command)
 
         except Exception:
             log.exception("Error applying media key %s", gsettings_key)
@@ -381,7 +259,7 @@ class MediaKeysHandler:
         candidates = [
             c.strip() for c in (
                 self._get_gsetting_command(mapping),
-                mapping['command'],
+                mapping.get('command', ''),
                 mapping.get('fallback_command', ''),
             ) if c and c.strip()
         ]
@@ -450,4 +328,3 @@ class MediaKeysHandler:
         log.debug("Media key changed: %s", key)
         self._apply_media_key(key, mapping)
         self.config_manager.save()
-        self.config_manager.reload_wayfire()

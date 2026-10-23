@@ -4,65 +4,11 @@ Configuration file management for Wayfire Bridge
 
 import configparser
 from pathlib import Path
-import os
-import socket
-import json
-import struct
 
 from .logging_config import get_logger
 
 log = get_logger(__name__)
 
-def _wayfire_ipc_set_option(section: str, option: str, value: str) -> bool:
-    """
-    Send a wayfire/set-option IPC call to the live compositor.
-    Requires the ipc plugin to be loaded in wayfire.ini.
-    Returns True on success, False if IPC is unavailable or fails.
-    """
-    socket_path = os.environ.get('WAYFIRE_SOCKET')
-    if not socket_path:
-        log.debug("WAYFIRE_SOCKET not set, cannot send IPC")
-        return False
-
-    msg = json.dumps({
-        "method": "wayfire/set-option",
-        "data": {
-            "section": section,
-            "option": option,
-            "value": value,
-        }
-    }).encode('utf-8')
-
-    try:
-        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as sock:
-            sock.settimeout(2.0)
-            sock.connect(socket_path)
-            # Wire format: 4-byte little-endian length, then message bytes
-            sock.sendall(struct.pack('<I', len(msg)) + msg)
-            # Read response: 4-byte length header first
-            header = sock.recv(4)
-            if len(header) < 4:
-                log.warning("IPC: short header response")
-                return False
-            resp_len = struct.unpack('<I', header)[0]
-            resp_data = b''
-            while len(resp_data) < resp_len:
-                chunk = sock.recv(resp_len - len(resp_data))
-                if not chunk:
-                    break
-                resp_data += chunk
-            response = json.loads(resp_data.decode('utf-8'))
-            if 'error' in response:
-                log.warning("IPC set-option error: %s", response['error'])
-                return False
-            log.debug("IPC set-option [%s] %s = %s -> %s", section, option, value, response)
-            return True
-    except FileNotFoundError:
-        log.debug("WAYFIRE_SOCKET path not found: %s", socket_path)
-        return False
-    except Exception:
-        log.debug("IPC call failed", exc_info=True)
-        return False
 
 class ConfigManager:
     """Manages wayfire.ini configuration file"""
@@ -129,8 +75,6 @@ class ConfigManager:
     def _ensure_required(self):
         # Ensure critical autostart section exists for budgie-desktop
         self._ensure_autostart_section()
-        # ensure hot wayfire config via IPC is enabled
-        self._ensure_ipc_plugin()
 
     # ------------------------------------------------------------------
     # Public accessors
@@ -257,21 +201,6 @@ class ConfigManager:
 
             log.debug("Saving configuration to %s", self.config_path)
 
-            if log.isEnabledFor(10):  # DEBUG
-                if 'input' in self.config:
-                    log.debug(
-                        "[input] section has %d keys  xkb_layout=%r",
-                        len(self.config['input']),
-                        self.config['input'].get('xkb_layout', '<unset>'),
-                    )
-                if 'command' in self.config:
-                    terminal_keys = [
-                        k for k in self.config['command'] if 'terminal' in k.lower()
-                    ]
-                    if terminal_keys:
-                        for k in terminal_keys:
-                            log.debug("[command] %s = %s", k, self.config['command'][k])
-
             with open(self.config_path, 'w') as f:
                 self.config.write(f)
                 f.flush()
@@ -282,44 +211,6 @@ class ConfigManager:
 
         except Exception:
             log.exception("Error saving config to %s", self.config_path)
-
-    def reload_wayfire(self):
-        """Wayfire watches wayfire.ini and reloads it automatically.
-
-        Note: [core] options like focus_mode are NOT reloaded from file —
-        use reload_wayfire_option() for those to apply changes at runtime via IPC.
-        """
-        log.debug("Wayfire will auto-reload configuration")
-        # Environment variables are only read at Wayfire startup
-        # A full restart is needed for XKB_DEFAULT_LAYOUT, XCURSOR_*, etc.
-
-    def reload_wayfire_option(self, section: str, option: str, value: str):
-        """Push a single option change to the live Wayfire compositor via IPC.
-
-        This is required for options that Wayfire does not hot-reload from the
-        config file, notably anything in [core] such as focus_mode.
-
-        Falls back silently if the ipc plugin is not loaded or WAYFIRE_SOCKET
-        is not set — the value is still written to wayfire.ini so it takes
-        effect on next Wayfire startup.
-        """
-        success = _wayfire_ipc_set_option(section, option, value)
-        if not success:
-            log.info(
-                "Could not push [%s] %s = %s via IPC "
-                "(ipc plugin may not be loaded; value saved to file for next startup)",
-                section, option, value
-            )
-
-    def _ensure_ipc_plugin(self):
-        """Ensure the ipc plugin is in the plugins list so IPC calls work."""
-        if 'core' not in self.config:
-            return
-        plugins_str = self.config['core'].get('plugins', '')
-        if 'ipc' not in plugins_str.split():
-            # Append ipc to the plugins list
-            self.config['core']['plugins'] = plugins_str.rstrip() + ' \\\n  ipc'
-            log.info("Added ipc plugin to [core] plugins list")
 
     def _get_plugins_list(self) -> list:
         """Return the current plugins list as a Python list of strings."""

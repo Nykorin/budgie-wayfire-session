@@ -19,12 +19,20 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 - **src/wayfire_bridge/bridge.py:** Options shared by mouse and touchpad in Wayfire (`left_handed_mode`, `middle_emulation`) are on if either device's setting asks for it (`_merged_flag`); a touchpad set to follow the mouse uses the mouse's value *(Claude)*
 
 ### Changed
+- **src/wayfire_bridge/bridge.py:** `_apply_setting` is one decision chain; before, half its checks hung off the single-binding `if` and only worked because the cases never overlapped. `xkb_options` now comes from the same lookup as the environment file, so `wayfire.ini` and the environment file can't disagree. The module docstring no longer mentions panel settings *(Claude, directed by user)*
+- **src/wayfire_bridge/media_keys.py:** The table keeps only fields that mean something, with a comment explaining them *(Claude, directed by user)*
 - **src/wayfire_bridge/bridge.py:** On startup, options older versions wrote that Wayfire doesn't have (`tap_button_map`, `touchpad_natural_scroll`, `touchpad_left_handed_mode`, `disable_while_typing`, `touchpad_send_events`, `xkb_repeat_delay`/`rate`, `[grid] mouse_snap`) are removed *(Claude)*
 - **src/wayfire.ini:** The `[input]` defaults and the settings list use Wayfire's option names *(Claude)*
 - **README.md, src/wayfire.ini:** Night light is handled by budgie-daemon, which runs gammastep from the night-light settings; it works on Wayfire through the wlr gamma-control protocol *(Claude, directed by user)*
 - **src/wayfire_bridge/bridge.py:** On startup the `[gamma]` section older versions wrote is removed *(Claude, directed by user)*
 
 ### Removed
+- **src/wayfire_bridge/config_manager.py:** The unused Wayfire IPC client (`_wayfire_ipc_set_option`, `reload_wayfire_option`) and `_ensure_ipc_plugin`, which existed only for it; new configs no longer get the `ipc` plugin forced on *(Claude, directed by user)*
+- **src/wayfire_bridge/config_manager.py, src/wayfire_bridge/bridge.py, src/wayfire_bridge/keybindings.py, src/wayfire_bridge/media_keys.py, src/wayfire_bridge/budgie_wm_actions.py:** `reload_wayfire()`, an empty method called after every save *(Claude, directed by user)*
+- **src/wayfire_bridge/media_keys.py:** 15 media keys with no command (help, search, playback, eject, mic-mute, accessibility toggles), which could never bind anything *(Claude, directed by user)*
+- **src/wayfire_bridge/bridge.py:** Re-applying every mapped mouse and touchpad setting at startup, which `setup_gsettings` had just done; a second `center-new-windows` handler writing the same `[place] mode` as its mapping; one-line plugin wrappers; an unused import *(Claude, directed by user)*
+- **src/wayfire_bridge/transforms.py:** The `xkb_layout` and `xkb_options` transforms, whose results the bridge discarded *(Claude, directed by user)*
+- **src/wayfire_bridge/config_manager.py:** A debug dump of hand-picked keys in `save` *(Claude, directed by user)*
 - **src/wayfire.ini:** `fisheye` from the default plugins: it comes from wayfire-plugins-extra, not Wayfire, so without that package Wayfire logged an error and skipped it. Configs that already list it keep it *(Claude, directed by user)*
 - **src/wayfire_bridge/mappings.py, src/wayfire_bridge/transforms.py:** Touchpad `tap-button-map`: Wayfire has no such option *(Claude)*
 - **src/wayfire_bridge/bridge.py:** The touchpad and mouse left-handed handlers, replaced by the shared flag *(Claude)*

@@ -1,11 +1,10 @@
 """
-Core bridge logic for Wayfire Bridge - Full Feature Parity with labwc
-Includes: environment file, peripherals, mutter settings, panel settings
+Core bridge logic for Wayfire Bridge: syncs Budgie/GNOME settings into
+wayfire.ini and the session environment file (keyboard, cursor, locale)
 """
 
 import os
 import shlex
-from pathlib import Path
 from typing import Dict
 import gi
 
@@ -205,7 +204,6 @@ class WayfireBridge:
         # Reload wayfire config if not delayed
         if not self.delay_config_write:
             self.config_manager.save()
-            self.config_manager.reload_wayfire()
 
     def setup_peripheral_monitoring(self):
         """Setup special monitoring for peripheral settings that need custom handling"""
@@ -288,7 +286,6 @@ class WayfireBridge:
             source = Gio.SettingsSchemaSource.get_default()
             mutter_settings = self._get_settings('org.gnome.mutter')
             if mutter_settings:
-                mutter_settings.connect('changed::center-new-windows', self._on_mutter_changed)
                 mutter_settings.connect('changed::overlay-key', self._on_mutter_changed)
 
             # mutter.keybindings is handled via GSETTINGS_MAPPINGS in setup_gsettings()
@@ -337,14 +334,13 @@ class WayfireBridge:
         self.config_manager.set_value('move', 'enable_snap', value)
 
         if enabled:
-            self._ensure_plugin('grid')
-            self._ensure_plugin('move')
+            self.config_manager.ensure_plugin('grid')
+            self.config_manager.ensure_plugin('move')
         log.info("Edge tiling %s ([move] enable_snap = %s)",
                  'enabled' if enabled else 'disabled', value)
 
         if not self.delay_config_write:
             self.config_manager.save()
-            self.config_manager.reload_wayfire()
 
     def _on_budgie_wm_focus_changed(self, settings):
         """Handle window-focus-mode from com.solus-project.budgie-wm.
@@ -362,30 +358,24 @@ class WayfireBridge:
 
         if mode == 'click':
             # Disable follow-focus entirely by removing it from plugins
-            self._remove_plugin('follow-focus')
+            self.config_manager.remove_plugin('follow-focus')
             # Clean up its section so there's no stale config
             self.config_manager.set_value('follow-focus', 'change_view', 'false')
         elif mode == 'sloppy':
             # Focus follows mouse but don't raise
-            self._ensure_plugin('follow-focus')
+            self.config_manager.ensure_plugin('follow-focus')
             self.config_manager.set_value('follow-focus', 'change_view', 'true')
             self.config_manager.set_value('follow-focus', 'change_output', 'true')
             self.config_manager.set_value('follow-focus', 'raise_on_top', 'false')
         elif mode == 'mouse':
             # Focus follows mouse AND raise the window
-            self._ensure_plugin('follow-focus')
+            self.config_manager.ensure_plugin('follow-focus')
             self.config_manager.set_value('follow-focus', 'change_view', 'true')
             self.config_manager.set_value('follow-focus', 'change_output', 'true')
             self.config_manager.set_value('follow-focus', 'raise_on_top', 'true')
 
         if not self.delay_config_write:
             self.config_manager.save()
-            self.config_manager.reload_wayfire()
-    def _ensure_plugin(self, plugin_name: str):
-        self.config_manager.ensure_plugin(plugin_name)
-
-    def _remove_plugin(self, plugin_name: str):
-        self.config_manager.remove_plugin(plugin_name)
 
     def setup_default_terminal(self):
         """Setup monitoring for default terminal"""
@@ -410,23 +400,13 @@ class WayfireBridge:
 
             if not self.delay_config_write:
                 self.config_manager.save()
-                self.config_manager.reload_wayfire()
         except Exception:
             log.exception("Error handling scroll method change")
 
     def _on_mutter_changed(self, settings, key):
         """Handle mutter settings changes"""
         try:
-            if key == 'center-new-windows':
-                value = settings.get_boolean(key)
-                mode = 'center' if value else 'cascade'
-                self.config_manager.set_value('place', 'mode', mode)
-                self._ensure_plugin('place')
-                log.info("Placement mode set to: %s", mode)
-                if not self.delay_config_write:
-                    self.config_manager.save()
-                    self.config_manager.reload_wayfire()
-            elif key == 'overlay-key':
+            if key == 'overlay-key':
                 self._apply_overlay_key(settings.get_string(key))
 
         except Exception:
@@ -483,7 +463,6 @@ class WayfireBridge:
 
         if not self.delay_config_write:
             self.config_manager.save()
-            self.config_manager.reload_wayfire()
 
     def _on_default_terminal_changed(self, settings, key):
         """Handle default terminal change"""
@@ -500,7 +479,6 @@ class WayfireBridge:
 
                 if not self.delay_config_write:
                     self.config_manager.save()
-                    self.config_manager.reload_wayfire()
 
         except Exception:
             log.exception("Error handling default terminal change")
@@ -538,53 +516,35 @@ class WayfireBridge:
                        option: str, transform):
         """Apply a gsettings value to the wayfire config"""
         try:
-            settings = self.settings_objects[schema]
-            value = settings.get_value(key).unpack()
-            transformed_value = transform(value)
+            value = self.settings_objects[schema].get_value(key).unpack()
 
-            # Keyboard layout: get_keyboard_layout() covers GSettings and the
-            # fallbacks, and keeps variants, which Wayfire takes separately
+            # Keyboard layout and options: same sources and fallbacks as the
+            # environment file (GSettings, locale1, /etc/default/keyboard).
+            # Wayfire takes the layout's variants as a separate option.
             if option == 'xkb_layout':
-                transformed_value, variant = split_keyboard_layout(self.get_keyboard_layout())
+                result, variant = split_keyboard_layout(self.get_keyboard_layout())
                 self.config_manager.set_value(section, 'xkb_variant', variant)
-                log.debug("xkb_layout=%r xkb_variant=%r", transformed_value, variant)
-
+            elif option == 'xkb_options':
+                result = self.get_merged_xkb_options()
             # Several keybinding keys share this option: merge all of them
             elif (section, option) in self.shared_targets:
-                transformed_value = self._merged_keybinding(section, option)
-
-            if (section, option) in self.single_binding_targets:
-                transformed_value = self._pick_single_binding(transformed_value)
-
-            # Special handling for xkb_options - use fallback if empty
-            elif option == 'xkb_options' and not transformed_value:
-                # GSettings is empty, use the priority system
-                transformed_value = self.get_merged_xkb_options()
-                log.debug("GSettings xkb_options empty, using fallback: %s", transformed_value)
-
+                result = self._merged_keybinding(section, option)
             # Mouse and touchpad share this flag: on if either asks for it
             elif (section, option) in self.shared_flag_targets:
-                transformed_value = self._merged_flag(section, option)
-
+                result = self._merged_flag(section, option)
             # Key repeat switched off: a repeat rate of 0 disables it
             elif option == 'kb_repeat_rate' and not self._settings_value(
                     'org.gnome.desktop.peripherals.keyboard', 'repeat', True):
-                transformed_value = 0
+                result = 0
+            else:
+                result = transform(value)
 
-            log.debug(
-                "Applying %s::%s  raw=%r (%s)  transformed=%r (%s)  target=[%s] %s",
-                schema, key,
-                value, type(value).__name__,
-                transformed_value, type(transformed_value).__name__,
-                section, option,
-            )
+            if (section, option) in self.single_binding_targets:
+                result = self._pick_single_binding(result)
 
-            self.config_manager.set_value(section, option, str(transformed_value))
-
-            log.debug(
-                "Applied %s::%s -> [%s] %s = %s",
-                schema, key, section, option, transformed_value,
-            )
+            self.config_manager.set_value(section, option, str(result))
+            log.debug("Applied %s::%s = %r -> [%s] %s = %s",
+                      schema, key, value, section, option, result)
 
         except Exception:
             log.exception("Error applying %s::%s", schema, key)
@@ -637,23 +597,15 @@ class WayfireBridge:
         """Handle a gsettings change event"""
         log.debug("Setting changed: %s::%s", schema, key)
 
-        # If input-sources changed, regenerate environment file AND update config
-        if schema == 'org.gnome.desktop.input-sources':
-            self.write_environment_file()
-            # Also write directly to wayfire.ini
-            self._apply_setting(schema, key, section, option, transform)
+        self._apply_setting(schema, key, section, option, transform)
 
-        # If cursor settings changed, regenerate environment file AND update config
-        elif schema == 'org.gnome.desktop.interface' and key in ('cursor-theme', 'cursor-size'):
+        # Keyboard and cursor settings are also exported to the environment file
+        if schema == 'org.gnome.desktop.input-sources' or (
+                schema == 'org.gnome.desktop.interface' and key in ('cursor-theme', 'cursor-size')):
             self.write_environment_file()
-            self._apply_setting(schema, key, section, option, transform)
-
-        else:
-            self._apply_setting(schema, key, section, option, transform)
 
         if not self.delay_config_write:
             self.config_manager.save()
-            self.config_manager.reload_wayfire()
 
     def get_keyboard_layout(self):
         """Get keyboard layout from GSettings, locale1, or fallback"""
@@ -953,70 +905,22 @@ class WayfireBridge:
         self.delay_config_write = True
 
         try:
-            # Sync all peripheral settings
-            if 'org.gnome.desktop.peripherals.touchpad' in self.settings_objects:
-                touchpad = self.settings_objects['org.gnome.desktop.peripherals.touchpad']
-                touchpad_keys = [
-                    'natural-scroll', 'left-handed', 'speed',
-                    'tap-to-click', 'disable-while-typing',
-                    'click-method', 'send-events',
-                    'tap-and-drag',
-                    'tap-and-drag-lock',
-                    'middle-click-emulation',
-                    'tap-button-map',
-                    'accel-profile'
-                ]
-                for key in touchpad_keys:
-                    try:
-                        # Find the mapping for this key
-                        full_key = ('org.gnome.desktop.peripherals.touchpad', key)
-                        if full_key in GSETTINGS_MAPPINGS:
-                            mapping = GSETTINGS_MAPPINGS[full_key]
-                            transform = getattr(self.transforms, mapping.get('transform', 'str'))
-                            self._apply_setting(
-                                'org.gnome.desktop.peripherals.touchpad',
-                                key,
-                                mapping['section'],
-                                mapping['option'],
-                                transform
-                            )
-                    except Exception:
-                        log.debug("Could not sync touchpad key %s", key, exc_info=True)
-
-                # Special handling for scroll method
+            # Settings with their own handlers; everything in GSETTINGS_MAPPINGS
+            # was already applied by setup_gsettings()
+            touchpad = self.settings_objects.get('org.gnome.desktop.peripherals.touchpad')
+            if touchpad:
                 try:
                     self._on_scroll_method_changed(touchpad, 'two-finger-scrolling-enabled')
                 except Exception:
                     log.debug("Could not sync scroll method", exc_info=True)
 
-            # Sync all mouse settings
-            if 'org.gnome.desktop.peripherals.mouse' in self.settings_objects:
-                mouse = self.settings_objects['org.gnome.desktop.peripherals.mouse']
-                mouse_keys = ['natural-scroll', 'left-handed', 'speed', 'accel-profile','middle-click-emulation']
-                for key in mouse_keys:
-                    try:
-                        full_key = ('org.gnome.desktop.peripherals.mouse', key)
-                        if full_key in GSETTINGS_MAPPINGS:
-                            mapping = GSETTINGS_MAPPINGS[full_key]
-                            transform = getattr(self.transforms, mapping.get('transform', 'str'))
-                            self._apply_setting(
-                                'org.gnome.desktop.peripherals.mouse',
-                                key,
-                                mapping['section'],
-                                mapping['option'],
-                                transform
-                            )
-                    except Exception:
-                        log.debug("Could not sync mouse key %s", key, exc_info=True)
-
             # Sync mutter settings
             if 'org.gnome.mutter' in self.settings_objects:
                 mutter = self.settings_objects['org.gnome.mutter']
-                for key in ['center-new-windows', 'overlay-key']:
-                    try:
-                        self._on_mutter_changed(mutter, key)
-                    except Exception:
-                        log.debug("Could not sync mutter key %s", key, exc_info=True)
+                try:
+                    self._on_mutter_changed(mutter, 'overlay-key')
+                except Exception:
+                    log.debug("Could not sync overlay-key", exc_info=True)
 
             # Sync default terminal
             if 'org.gnome.desktop.default-applications.terminal' in self.settings_objects:
