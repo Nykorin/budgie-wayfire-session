@@ -96,6 +96,16 @@ GSETTINGS_MAPPINGS = {
         'option': 'toggle_showdesktop',
         'transform': 'keybinding'
     },
+    ('org.gnome.desktop.wm.keybindings', 'always-on-top'): {
+        'section': 'wm-actions',
+        'option': 'toggle_always_on_top',
+        'transform': 'keybinding'
+    },
+    ('org.gnome.desktop.wm.keybindings', 'toggle-above'): {
+        'section': 'wm-actions',
+        'option': 'toggle_always_on_top',
+        'transform': 'keybinding'
+    },
 
     # --- [switcher] - visual Alt-Tab style switcher ---
     # switch-applications and switch-windows both map to the visual switcher.
@@ -174,6 +184,16 @@ GSETTINGS_MAPPINGS = {
         'option': 'binding_down',
         'transform': 'keybinding'
     },
+    ('org.gnome.desktop.wm.keybindings', 'move-to-workspace-up'): {
+        'section': 'vswitch',
+        'option': 'with_win_up',
+        'transform': 'keybinding'
+    },
+    ('org.gnome.desktop.wm.keybindings', 'move-to-workspace-down'): {
+        'section': 'vswitch',
+        'option': 'with_win_down',
+        'transform': 'keybinding'
+    },
     ('org.gnome.mutter', 'center-new-windows'): {
         'section': 'place',
         'option': 'mode',
@@ -186,8 +206,6 @@ GSETTINGS_MAPPINGS = {
     # switch-group, cycle-group (and backward variants) — no app grouping
     # switch-panels, cycle-panels (and backward variants) — no panel cycling
     # move-to-monitor-*               — oswitch has no gsettings-driven keybinding
-    # switch-to-workspace-1..8        — static numbered slots, not dynamically mappable
-    # move-to-workspace-1..8          — same
 
     # ==========================================================================
     # Mutter Keybindings
@@ -238,6 +256,46 @@ GSETTINGS_MAPPINGS = {
         'option': 'binding_4',
         'transform': 'keybinding'
     },
+    ('org.gnome.desktop.wm.keybindings', 'switch-to-workspace-5'): {
+        'section': 'vswitch',
+        'option': 'binding_5',
+        'transform': 'keybinding'
+    },
+    ('org.gnome.desktop.wm.keybindings', 'switch-to-workspace-6'): {
+        'section': 'vswitch',
+        'option': 'binding_6',
+        'transform': 'keybinding'
+    },
+    ('org.gnome.desktop.wm.keybindings', 'switch-to-workspace-7'): {
+        'section': 'vswitch',
+        'option': 'binding_7',
+        'transform': 'keybinding'
+    },
+    ('org.gnome.desktop.wm.keybindings', 'switch-to-workspace-8'): {
+        'section': 'vswitch',
+        'option': 'binding_8',
+        'transform': 'keybinding'
+    },
+    ('org.gnome.desktop.wm.keybindings', 'switch-to-workspace-9'): {
+        'section': 'vswitch',
+        'option': 'binding_9',
+        'transform': 'keybinding'
+    },
+    ('org.gnome.desktop.wm.keybindings', 'switch-to-workspace-10'): {
+        'section': 'vswitch',
+        'option': 'binding_10',
+        'transform': 'keybinding'
+    },
+    ('org.gnome.desktop.wm.keybindings', 'switch-to-workspace-11'): {
+        'section': 'vswitch',
+        'option': 'binding_11',
+        'transform': 'keybinding'
+    },
+    ('org.gnome.desktop.wm.keybindings', 'switch-to-workspace-12'): {
+        'section': 'vswitch',
+        'option': 'binding_12',
+        'transform': 'keybinding'
+    },
     ('org.gnome.desktop.wm.keybindings', 'switch-to-workspace-last'): {
         'section': 'vswitch',
         'option': 'binding_last',
@@ -286,6 +344,26 @@ GSETTINGS_MAPPINGS = {
     ('org.gnome.desktop.wm.keybindings', 'move-to-workspace-8'): {
         'section': 'vswitch',
         'option': 'send_win_8',
+        'transform': 'keybinding'
+    },
+    ('org.gnome.desktop.wm.keybindings', 'move-to-workspace-9'): {
+        'section': 'vswitch',
+        'option': 'send_win_9',
+        'transform': 'keybinding'
+    },
+    ('org.gnome.desktop.wm.keybindings', 'move-to-workspace-10'): {
+        'section': 'vswitch',
+        'option': 'send_win_10',
+        'transform': 'keybinding'
+    },
+    ('org.gnome.desktop.wm.keybindings', 'move-to-workspace-11'): {
+        'section': 'vswitch',
+        'option': 'send_win_11',
+        'transform': 'keybinding'
+    },
+    ('org.gnome.desktop.wm.keybindings', 'move-to-workspace-12'): {
+        'section': 'vswitch',
+        'option': 'send_win_12',
         'transform': 'keybinding'
     },
     ('org.gnome.desktop.wm.keybindings', 'move-to-workspace-last'): {
@@ -377,6 +455,11 @@ GSETTINGS_MAPPINGS = {
         'option': 'touchpad_cursor_speed',
         'transform': 'float'
     },
+    ('org.gnome.desktop.peripherals.touchpad', 'scroll-speed'): {
+        'section': 'input',
+        'option': 'touchpad_scroll_speed',
+        'transform': 'float'
+    },
     # 'left'/'right'/'mouse'; 'mouse' follows the mouse's left-handed setting
     ('org.gnome.desktop.peripherals.touchpad', 'left-handed'): {
         'section': 'input',
@@ -407,6 +490,8 @@ GSETTINGS_MAPPINGS = {
         'option': 'kb_repeat_delay',
         'transform': 'int'
     },
+    # 'repeat' (key repeat on/off) has no option of its own: the bridge
+    # writes kb_repeat_rate = 0 when it is off, which disables repeat
     ('org.gnome.desktop.peripherals.keyboard', 'repeat-interval'): {
         'section': 'input',
         'option': 'kb_repeat_rate',

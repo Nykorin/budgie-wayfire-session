@@ -225,6 +225,14 @@ class WayfireBridge:
         except Exception:
             log.warning("Could not setup touchpad monitoring", exc_info=True)
 
+        # Key repeat on/off feeds into kb_repeat_rate
+        try:
+            keyboard_settings = self._get_settings('org.gnome.desktop.peripherals.keyboard')
+            if keyboard_settings:
+                keyboard_settings.connect('changed::repeat', self._on_key_repeat_changed)
+        except Exception:
+            log.warning("Could not setup keyboard repeat monitoring", exc_info=True)
+
         # Mouse settings
         try:
             mouse_settings = self._get_settings('org.gnome.desktop.peripherals.mouse')
@@ -233,6 +241,22 @@ class WayfireBridge:
                 log.debug("Mouse monitoring enabled")
         except Exception:
             log.warning("Could not setup mouse monitoring", exc_info=True)
+
+    def _settings_value(self, schema: str, key: str, default=None):
+        """Read a gsettings value from the shared settings object, or default."""
+        settings = self._get_settings(schema)
+        if settings is None or not settings.get_property('settings-schema').has_key(key):
+            return default
+        return settings.get_value(key).unpack()
+
+    def _on_key_repeat_changed(self, settings, key):
+        """Re-apply kb_repeat_rate, which is 0 while key repeat is off"""
+        schema = 'org.gnome.desktop.peripherals.keyboard'
+        mapping = GSETTINGS_MAPPINGS[(schema, 'repeat-interval')]
+        self._on_setting_changed(
+            schema, 'repeat-interval', mapping['section'], mapping['option'],
+            getattr(self.transforms, mapping['transform']),
+        )
 
     def _get_settings(self, schema: str):
         """Return the shared Gio.Settings for a schema, creating it if needed.
@@ -541,6 +565,11 @@ class WayfireBridge:
             # Mouse and touchpad share this flag: on if either asks for it
             elif (section, option) in self.shared_flag_targets:
                 transformed_value = self._merged_flag(section, option)
+
+            # Key repeat switched off: a repeat rate of 0 disables it
+            elif option == 'kb_repeat_rate' and not self._settings_value(
+                    'org.gnome.desktop.peripherals.keyboard', 'repeat', True):
+                transformed_value = 0
 
             log.debug(
                 "Applying %s::%s  raw=%r (%s)  transformed=%r (%s)  target=[%s] %s",

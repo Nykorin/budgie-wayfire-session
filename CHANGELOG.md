@@ -9,6 +9,11 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 ## [2026-10-23]
 
 ### Added
+- **src/wayfire_bridge/mappings.py:** Switch to workspace 5–12 (`binding_5`–`12`) and move a window to workspace 9–12 (`send_win_9`–`12`); a comment wrongly said numbered workspaces couldn't be mapped *(Claude)*
+- **src/wayfire_bridge/mappings.py:** Move a window one workspace up or down, following it (`with_win_up`/`down`) *(Claude)*
+- **src/wayfire_bridge/mappings.py:** "Always on top" (`always-on-top` and `toggle-above`, merged) to `[wm-actions] toggle_always_on_top` *(Claude)*
+- **src/wayfire_bridge/bridge.py, src/wayfire_bridge/mappings.py:** Turning key repeat off (`repeat`) writes `kb_repeat_rate = 0`, which Wayland defines as no repeat; turning it on restores the rate from `repeat-interval` *(Claude)*
+- **src/wayfire_bridge/mappings.py:** Touchpad scroll speed to `touchpad_scroll_speed` *(Claude)*
 - **src/wayfire_bridge/transforms.py:** Key names for the modifier keys (`Shift_L`, `Super_R`, …) and more hardware keys Budgie's defaults use: screensaver (`KEY_COFFEE`), suspend, rfkill, UWB, keyboard backlight toggle, keyboard layout, brightness cycle, rotate display and rotation lock, shuffle, and the touchpad toggles (`KEY_F21`–`F23`, where xkb places them) *(Claude)*
 - **src/wayfire_bridge/bridge.py:** Options shared by mouse and touchpad in Wayfire (`left_handed_mode`, `middle_emulation`) are on if either device's setting asks for it (`_merged_flag`); a touchpad set to follow the mouse uses the mouse's value *(Claude)*
 
