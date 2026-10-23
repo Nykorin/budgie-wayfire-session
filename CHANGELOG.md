@@ -23,6 +23,8 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 - **src/wayfire.ini:** The `[command]` entries for close, maximize, minimize and moving a window to the left/right workspace: their bindings put the key before the modifiers (`KEY_Q ALT`) and their commands (`wm-actions close`, `vswitch-move left`) don't exist, so they did nothing. The bridge writes the real bindings to `[core]`, `[wm-actions]` and `[vswitch]` *(Claude, directed by user)*
 
 ### Fixed
+- **src/startbudgiewayfire.in:** If `budgie-session-binary` hadn't started within about 10 seconds, `pidwait` returned at once and Wayfire was killed, ending a slow first login. The launcher now waits for the session for as long as Wayfire is alive, and exits if Wayfire does *(Claude)*
+- **src/startbudgiewayfire.in:** Without `pidwait` (procps older than 4) the session ended immediately; a polling loop takes its place. The config path is quoted *(Claude)*
 - **src/wayfire_bridge/bridge.py:** The Budgie menu binding said expo's `<super>` toggle had to be removed to avoid a clash, but nothing removed it. When the overlay key's binding is also one of `[expo] toggle`'s alternatives, that alternative is dropped (`disabled` if none is left) *(Claude)*
 - **src/wayfire_bridge/bridge.py:** The environment file is sourced by the launcher's shell, but its values were written unquoted, so a cursor theme with a space in its name broke it. Values the bridge writes are shell-quoted; lines added by hand are kept as written *(Claude)*
 - **src/wayfire_bridge/bridge.py:** The warning after a keyboard layout change suggested `pkill wayfire && wayfire`, which ends the whole session; it now says XWayland and new apps pick the change up after logging out and back in *(Claude)*
