@@ -1,4 +1,0 @@
-[GNOME Session]
-Name=Budgie Desktop (Wayfire)
-RequiredComponents=org.buddiesofbudgie.BudgieDaemon;org.buddiesofbudgie.BudgiePanel;org.buddiesofbudgie.BudgiePowerDialog;org.buddiesofbudgie.BudgiePolkit;org.buddiesofbudgie.SettingsDaemon.A11ySettings;org.buddiesofbudgie.SettingsDaemon.Datetime;org.buddiesofbudgie.SettingsDaemon.Housekeeping;org.buddiesofbudgie.SettingsDaemon.Power;org.buddiesofbudgie.SettingsDaemon.PrintNotifications;org.buddiesofbudgie.SettingsDaemon.Rfkill;org.buddiesofbudgie.SettingsDaemon.Sharing;org.buddiesofbudgie.SettingsDaemon.Smartcard;org.buddiesofbudgie.SettingsDaemon.Sound;org.buddiesofbudgie.SettingsDaemon.Wacom;
-DesktopName=Budgie Desktop (Wayfire)

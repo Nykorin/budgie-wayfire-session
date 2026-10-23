@@ -30,6 +30,7 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 - **src/wayfire_bridge/bridge.py:** On startup the `[gamma]` section older versions wrote is removed *(Claude, directed by user)*
 
 ### Removed
+- **session-deprecated-fyi/:** The old session files kept for reference (`budgie-desktop-wayfire`, `BudgieDesktopWayfire.session`, `budgie-wayfire.desktop`, `budgie-wayfire-wrapper`, `wayfire.ini`); meson never installed them and nothing referenced them. They remain in the git history *(Claude, directed by user)*
 - **src/wayfire_bridge/config_manager.py:** The unused Wayfire IPC client (`_wayfire_ipc_set_option`, `reload_wayfire_option`) and `_ensure_ipc_plugin`, which existed only for it; new configs no longer get the `ipc` plugin forced on *(Claude, directed by user)*
 - **src/wayfire_bridge/config_manager.py, src/wayfire_bridge/bridge.py, src/wayfire_bridge/keybindings.py, src/wayfire_bridge/media_keys.py, src/wayfire_bridge/budgie_wm_actions.py:** `reload_wayfire()`, an empty method called after every save *(Claude, directed by user)*
 - **src/wayfire_bridge/media_keys.py:** 15 media keys with no command (help, search, playback, eject, mic-mute, accessibility toggles), which could never bind anything *(Claude, directed by user)*
