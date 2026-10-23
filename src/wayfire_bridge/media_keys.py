@@ -146,13 +146,25 @@ MEDIA_KEY_MAPPINGS = {
         'command_name': 'session_logout',
         'command': 'budgie-session-quit',
     },
+    # budgie-brightness-helper sets the screen backlight (/sys/class/backlight)
+    'screen-brightness-down': {
+        'command_name': 'backlight_screen_down',
+        'repeatable': True,
+        'command': 'budgie-brightness-helper --down',
+    },
+    'screen-brightness-up': {
+        'command_name': 'backlight_screen_up',
+        'repeatable': True,
+        'command': 'budgie-brightness-helper --up',
+    },
+    # Older versions bound these to the screen helper above
     'keyboard-brightness-down': {
         'command_name': 'backlight_keyboard_down',
-        'command': 'budgie-brightness-helper --down',
+        'unsupported': 'Budgie has no keyboard backlight tool to bind it to',
     },
     'keyboard-brightness-up': {
         'command_name': 'backlight_keyboard_up',
-        'command': 'budgie-brightness-helper --up',
+        'unsupported': 'Budgie has no keyboard backlight tool to bind it to',
     },
 }
 

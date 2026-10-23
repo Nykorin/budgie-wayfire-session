@@ -89,7 +89,7 @@ The bridge watches GSettings and writes the matching options into `wayfire.ini`,
 - **Keyboard:** layouts and their variants, XKB options (from GSettings, else systemd-localed, else `/etc/default/keyboard`), key repeat on/off, delay and rate, and Num Lock at startup.
 - **Mouse and touchpad:** speed, acceleration profile, natural scrolling, left-handed mode, and middle-click emulation. For touchpads also tap-to-click, tap-and-drag, drag lock, scroll method and speed, click method, disable while typing, and disable while a mouse is connected.
 - **Cursor:** theme and size.
-- **Media keys:** terminal, browser, email, file manager, calculator, settings, lock screen, log out, volume, mic mute, playback, keyboard backlight and magnifier. The keyboard's own keys stay bound alongside any custom shortcut.
+- **Media keys:** terminal, browser, email, file manager, calculator, settings, lock screen, log out, volume, mic mute, playback, screen brightness and magnifier. The keyboard's own keys stay bound alongside any custom shortcut.
 - **Custom shortcuts** from Budgie Control Center, as they are added, changed and removed.
 
 Some settings can't be synced because Wayfire has no equivalent:
@@ -101,6 +101,7 @@ Some settings can't be synced because Wayfire has no equivalent:
 - Title-bar click actions and the double-click time.
 - Magnifier zoom in and out (with the zoom plugin, Super+scroll zooms the whole screen).
 - Moving windows between monitors.
+- Keyboard backlight keys: Budgie has no tool for the keyboard backlight.
 
 Night light isn't the bridge's job: `budgie-daemon` runs gammastep, which works on Wayfire.
 

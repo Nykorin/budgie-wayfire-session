@@ -82,6 +82,18 @@ class MediaKeys(BridgeTestCase):
         self.assertTrue(self.option('command', 'binding_volume_mute').startswith('<super> <shift> KEY_F10'))
         self.assertIsNone(self.option('command', 'repeatable_binding_volume_mute'))
 
+    def test_screen_brightness_keys_repeat_with_the_brightness_helper(self):
+        self.set(MEDIA, 'screen-brightness-up', ['<Super><Shift>F11'])
+        self.assertTrue(self.option('command', 'repeatable_binding_backlight_screen_up').startswith('<super> <shift> KEY_F11'))
+        self.assertEqual(self.option('command', 'command_backlight_screen_up'), 'budgie-brightness-helper --up')
+
+    def test_keyboard_backlight_keys_are_not_bound_to_the_screen(self):
+        self.bridge.config_manager.set_value('command', 'binding_backlight_keyboard_up', 'KEY_KBDILLUMUP')
+        self.bridge.config_manager.set_value('command', 'command_backlight_keyboard_up', 'budgie-brightness-helper --up')
+        self.set(MEDIA, 'keyboard-brightness-up', ['<Super><Shift>F11'])
+        self.assertIsNone(self.option('command', 'binding_backlight_keyboard_up'))
+        self.assertIsNone(self.option('command', 'command_backlight_keyboard_up'))
+
     def test_clearing_a_shortcut_keeps_only_the_hardware_keys(self):
         self.set(MEDIA, 'www', ['<Super><Shift>F9'])
         self.set(MEDIA, 'www', [])

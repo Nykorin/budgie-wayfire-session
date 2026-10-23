@@ -9,6 +9,7 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 ## [2026-10-23]
 
 ### Added
+- **tests/test_handlers.py:** The screen brightness keys repeat and run the helper; the keyboard backlight keys are no longer bound *(Claude, directed by user)*
 - **tests/test_handlers.py, tests/test_migrations.py:** Volume keys are bound once, as repeatable, and replace a plain binding of the same name; volume mute stays a plain binding; entries under the old names are removed from an existing config while the user's own stay *(Claude, directed by user)*
 - **tests/test_handlers.py:** The browser key opens the default browser when `x-www-browser` isn't installed *(Claude, directed by user)*
 - **tests/test_transforms.py, tests/test_sync.py:** The grid for 0 to 16 workspaces, and the bridge writing it for 1, 4, 5, 6 and 9 over a hand-set `vheight`; these replace the tests for a user-set `vheight` *(Claude, directed by user)*
@@ -32,6 +33,7 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 - **src/wayfire_bridge/bridge.py:** Options shared by mouse and touchpad in Wayfire (`left_handed_mode`, `middle_emulation`) are on if either device's setting asks for it (`_merged_flag`); a touchpad set to follow the mouse uses the mouse's value *(Claude)*
 
 ### Changed
+- **src/wayfire.ini, README.md:** List screen brightness among the synced keys and the keyboard backlight among what can't be synced; drop the commented-out `light` example in `[core]` *(Claude, directed by user)*
 - **src/wayfire_bridge/media_keys.py:** The `[command]` entries are named by kind: `launch_filemanager`, `session_lock`, `session_logout`, `media_play`/`pause`/`stop`/`next`/`previous`, `volume_mute`, `volume_mic_mute`, `volume_up`/`down` and `backlight_keyboard_up`/`down`, instead of `launch_file_manager`, `lock_screen` and `on_*`. This matches the names the user's LXQt Wayfire config uses, so both read alike *(Claude, directed by user)*
 - **src/wayfire_bridge/media_keys.py:** Volume up and down are written as `repeatable_binding_`, so they repeat while the key is held. A plain `binding_` under the same name is removed, since Wayfire would run both and step the volume twice per press *(Claude, directed by user)*
 - **src/wayfire_bridge/bridge.py:** On startup the entries under the old names are removed; the bridge writes them again under the new ones *(Claude, directed by user)*
@@ -64,6 +66,7 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 - **src/wayfire_bridge/mappings.py, src/wayfire.ini:** Syncing night light to a `[gamma]` section: no Wayfire plugin reads it, so it never did anything *(Claude, directed by user)*
 
 ### Fixed
+- **src/wayfire_bridge/media_keys.py:** Budgie's screen brightness shortcuts (`screen-brightness-up`/`down`, the `XF86MonBrightness` keys) are synced as `repeatable_binding_backlight_screen_up`/`down`, running `budgie-brightness-helper` as Budgie's labwc setup does; the bridge had no mapping for them, so the brightness keys did nothing. The keyboard backlight shortcuts were bound to that same helper, which sets the screen backlight, so the keyboard light keys changed the screen; they are now left unbound, since Budgie has no keyboard backlight tool *(Claude, directed by user)*
 - **src/wayfire_bridge/media_keys.py:** The browser key falls back to the desktop's default browser (`gtk-launch` of `xdg-settings get default-web-browser`) instead of `firefox`. `x-www-browser` is a Debian alternatives link that Arch and others don't have, so with Firefox not installed the key was bound to a command that doesn't exist and did nothing *(Claude, directed by user)*
 - **src/wayfire-bridge:** Without `XDG_RUNTIME_DIR`, the single-instance lock was `/tmp/wayfire-bridge.lock`, a name shared by every user: another user's file there made the bridge crash, or exit as if already running, so settings silently stopped syncing. The lock now falls back to `~/.cache/budgie-wayfire/` (`$XDG_CACHE_HOME` if set), and a lock that can't be created is logged and the bridge runs without it instead of crashing *(Claude)*
 - **src/startbudgiewayfire.in:** Without `/run/user` or `/var/run/user` (no logind), the launcher used `/tmp/${USER}-runtime` and accepted it if it already existed, whoever owned it. Another local user could create it first and replace the sockets the session puts there (Wayland, PipeWire, and Wayfire's IPC, which can run commands). The session now starts only if the runtime directory is a real directory owned by the user with mode 700, as the XDG spec requires; a logind session (`/run/user/UID`) already is *(Claude)*
