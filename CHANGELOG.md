@@ -24,6 +24,7 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 - **src/wayfire_bridge/bridge.py:** On startup the `[gamma]` section older versions wrote is removed *(Claude, directed by user)*
 
 ### Removed
+- **src/wayfire.ini:** `fisheye` from the default plugins: it comes from wayfire-plugins-extra, not Wayfire, so without that package Wayfire logged an error and skipped it. Configs that already list it keep it *(Claude, directed by user)*
 - **src/wayfire_bridge/mappings.py, src/wayfire_bridge/transforms.py:** Touchpad `tap-button-map`: Wayfire has no such option *(Claude)*
 - **src/wayfire_bridge/bridge.py:** The touchpad and mouse left-handed handlers, replaced by the shared flag *(Claude)*
 - **src/wayfire_bridge/mappings.py, src/wayfire.ini:** Syncing night light to a `[gamma]` section: no Wayfire plugin reads it, so it never did anything *(Claude, directed by user)*
