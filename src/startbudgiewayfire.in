@@ -46,6 +46,16 @@ fi
 # of XDG_SESSION_TYPE should be respected
 XDG_SESSION_TYPE="wayland"
 export XDG_SESSION_TYPE
+
+# Name the desktop before wayfire starts, as startlxqtwayland does: greeters
+# like greetd's don't set it, and wayfire then gives everything it launches
+# (shortcuts, autostart) XDG_CURRENT_DESKTOP=wayfire
+XDG_CURRENT_DESKTOP="Budgie:wayfire:wlroots"
+export XDG_CURRENT_DESKTOP
+# and for new units started by the user service manager
+if command -v systemctl >/dev/null; then
+    systemctl --user import-environment XDG_CURRENT_DESKTOP
+fi
 # Make sure all toolkits use their Wayland backend
 #
 # For Gtk applications also the x11 backend as a safe fallback

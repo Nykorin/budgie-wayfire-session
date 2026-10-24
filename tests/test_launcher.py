@@ -45,6 +45,15 @@ class Launcher(unittest.TestCase):
     def test_syntax(self):
         self.assertEqual(subprocess.run(['bash', '-n', str(LAUNCHER)]).returncode, 0)
 
+    def test_names_the_desktop_for_wayfire_and_systemd(self):
+        imported = self.tmp / 'imported'
+        self.stub('systemctl', f'echo "$* $XDG_CURRENT_DESKTOP" > "{imported}"')
+        script = self.section('# Name the desktop', '\nfi') + '\necho "$XDG_CURRENT_DESKTOP"'
+        result = self.run_bash('XDG_CURRENT_DESKTOP=GNOME\n' + script)
+        self.assertEqual(result.stdout.strip(), 'Budgie:wayfire:wlroots')
+        self.assertEqual(imported.read_text().strip(),
+                         '--user import-environment XDG_CURRENT_DESKTOP Budgie:wayfire:wlroots')
+
     def test_log_file_and_rotation(self):
         self.stub('wayfire', 'echo "started $*"; echo "EE an error" >&2')
         start = self.section("# Log wayfire's output", 'WAYFIRE_PID=$!') + '\nwait $WAYFIRE_PID\n'
