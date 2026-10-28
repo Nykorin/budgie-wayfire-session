@@ -7,6 +7,9 @@ This is a fork of [UbuntuBudgie/budgie-wayfire-session](https://github.com/Ubunt
 > [!IMPORTANT]
 > **This fork's changes were written with AI.** Everything after upstream commit `41842ea`, listed in [`CHANGELOG.md`](CHANGELOG.md), was written by Claude (Anthropic), following the author's design, requests and review; the code before it is Ubuntu Budgie's. The author tested it only on their own system (CachyOS, Wayfire 0.11, Budgie 10.10), and it has not been reviewed or tested by anyone else, including the upstream project. The magnifier and focus-follows-mouse also need wayfire-plugins-extra built for your Wayfire version. Read the changes before installing, and keep a copy of `~/.config/budgie-desktop/wayfire/`. It comes with no warranty.
 
+> [!WARNING]
+> **This is the experimental branch, `patches-experimental`.** It has newer changes than `patches` that have had less testing and can cause issues: the media key entries in `wayfire.ini` are renamed by kind, the bridge writes `wayfire.ini` once at startup instead of several times, and the launcher sets `XDG_CURRENT_DESKTOP` before Wayfire starts. One issue is known so far: after a cold boot, the screen turns off as the session loads, and a key press or mouse movement turns it back on. The cause isn't known yet; it may come from Wayfire's idle plugin being enabled for the greeter rather than from this branch. For fewer surprises, use the `patches` branch.
+
 ## Dependencies
 
 Arch package names are the ones on the tested system. Debian/Ubuntu names are the usual equivalents and have not been tested.
