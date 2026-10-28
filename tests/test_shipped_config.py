@@ -29,7 +29,7 @@ class ShippedConfig(unittest.TestCase):
 
     def test_autostart_starts_budgie_and_the_bridge(self):
         self.assertEqual(self.config['autostart']['desktop'], 'budgie-desktop')
-        self.assertEqual(self.config['autostart']['bridge'], '/usr/libexec/budgie-desktop/wayfire-bridge')
+        self.assertEqual(self.config['autostart']['bridge'], '/usr/lib/budgie-desktop/wayfire-bridge')
 
     def test_bindings_put_modifiers_first(self):
         for section in self.config.sections():

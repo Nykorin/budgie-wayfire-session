@@ -6,6 +6,11 @@ Contributors: user (design & direction), Claude (code)
 
 Each bullet starts with the file it touches; paths are relative to the repository root.
 
+## [2026-10-28]
+
+### Changed
+- **src/systemd/wayfire-bridge.service, tests/test_shipped_config.py, README.md:** Use the bridge's new path, `/usr/lib/budgie-desktop/wayfire-bridge`, which the Arch layout commit missed; drop the README note that the default config's portal line does nothing on Arch, since it now starts `/usr/lib/xdg-desktop-portal` *(Claude, directed by user)*
+
 ## [2026-10-23]
 
 ### Added

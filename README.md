@@ -71,7 +71,7 @@ This installs:
 | `/usr/bin/startbudgiewayfire` | the session launcher |
 | `/usr/share/wayland-sessions/budgie-wayfire.desktop` | the login screen entry |
 | `/usr/share/budgie-desktop/wayfire/wayfire.ini` | the default Wayfire config |
-| `/usr/libexec/budgie-desktop/wayfire-bridge`, `wayfire_bridge/` | the bridge |
+| `/usr/lib/budgie-desktop/wayfire-bridge`, `wayfire_bridge/` | the bridge |
 
 `src/systemd/wayfire-bridge.service` is not installed: the default config starts the bridge from `[autostart]`. Only one bridge runs at a time, so enabling the unit as well is harmless.
 
@@ -119,7 +119,7 @@ Wayfire's output, along with that of Budgie and the bridge, goes to `~/.local/st
 To watch the bridge in detail, stop it and run it by hand with debug output:
 
     pkill -f wayfire-bridge
-    /usr/libexec/budgie-desktop/wayfire-bridge --verbose
+    /usr/lib/budgie-desktop/wayfire-bridge --verbose
 
 ## Tests
 
@@ -130,7 +130,6 @@ The tests use Python's `unittest`, nothing to install beyond the bridge's own de
 ## Known limitations
 
 - Tested only on CachyOS with Wayfire 0.11 and Budgie 10.10.
-- The default config starts the portal from `/usr/libexec/xdg-desktop-portal`. Arch installs it in `/usr/lib/`, so that line does nothing there; the portal still starts on demand over D-Bus.
 - Wayfire's `animate` plugin logs `Unknown animation type: ""` for Budgie's panel and desktop, which get no animation. This is harmless.
 
 ## Code layout
