@@ -19,6 +19,9 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 ### Removed
 - **src/wayfire_bridge/media_keys.py, src/wayfire_bridge/bridge.py, tests/test_migrations.py:** The startup cleanup that deleted media key entries under the names older versions used (`OLD_COMMAND_NAMES`), and its test. It ran on every start for a one-time rename; new or renamed bindings now go into the mapping list and the shipped `wayfire.ini` instead of being converted in the user's config *(Claude, directed by user)*
 
+### Fixed
+- **tests/helpers.py, tests/test_sync.py:** `StartupWrites` started its own bridge without skipping the shipped config check, so running the tests compared the installed `wayfire.ini` with a test config and wrote the fingerprint to the real `~/.local/state/budgie-wayfire/`, which kept the installed bridge from saving `wayfire.ini.new` or notifying. Every test bridge now comes from one helper that skips the check, and the tests point `XDG_STATE_HOME` at a temporary folder *(Claude, directed by user)*
+
 ## [2026-10-23]
 
 ### Added

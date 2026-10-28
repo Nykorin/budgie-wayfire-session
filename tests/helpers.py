@@ -19,6 +19,10 @@ from pathlib import Path
 
 # Must be set before GLib is loaded
 os.environ['GSETTINGS_BACKEND'] = 'memory'
+# What the bridge keeps in ~/.local/state (the shipped config's fingerprint)
+# goes to a folder that is removed when the tests end
+_STATE_HOME = tempfile.TemporaryDirectory()
+os.environ['XDG_STATE_HOME'] = _STATE_HOME.name
 sys.dont_write_bytecode = True
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -135,15 +139,20 @@ class BridgeTestCase(unittest.TestCase):
     def prepare_ini(self):
         shutil.copy(self.initial_ini, self.ini)
 
-    def start_bridge(self):
+    def new_bridge(self):
+        """A bridge on self.ini, its startup saves still held."""
         original = bridge_module.ConfigManager, bridge_module.check_shipped_config
         bridge_module.ConfigManager = lambda: ConfigManager(self.ini)
-        # The real one would read the installed config and write to ~/.local/state
+        # The real one would compare with the installed config and could
+        # show a notification
         bridge_module.check_shipped_config = lambda config_path: None
         try:
-            bridge = bridge_module.WayfireBridge()
+            return bridge_module.WayfireBridge()
         finally:
             bridge_module.ConfigManager, bridge_module.check_shipped_config = original
+
+    def start_bridge(self):
+        bridge = self.new_bridge()
         # What Wayfire would see 3 s after login
         bridge.release_startup_saves()
         return bridge

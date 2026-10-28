@@ -1,7 +1,7 @@
 """Changing a GSettings key updates wayfire.ini while the bridge runs."""
 import unittest
 
-from tests.helpers import METADATA_DIR, BridgeTestCase, bridge_module, ConfigManager, option_type, pump, wayfire_metadata
+from tests.helpers import METADATA_DIR, BridgeTestCase, option_type, pump, wayfire_metadata
 from wayfire_bridge.mappings import GSETTINGS_MAPPINGS
 
 TEST_STRINGS = {
@@ -154,12 +154,7 @@ class StartupWrites(BridgeTestCase):
         self.assertIn('\nvheight = 2\n', text)
         self.ini.write_text(text.replace('\nvheight = 2\n', '\nvheight = 7\n', 1))
         self.at_start = self.ini.read_text()
-        original = bridge_module.ConfigManager
-        bridge_module.ConfigManager = lambda: ConfigManager(self.ini)
-        try:
-            return bridge_module.WayfireBridge()
-        finally:
-            bridge_module.ConfigManager = original
+        return self.new_bridge()
 
     def test_nothing_is_written_until_the_delay_has_passed(self):
         self.assertEqual(self.ini.read_text(), self.at_start)
