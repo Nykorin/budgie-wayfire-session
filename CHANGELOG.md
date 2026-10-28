@@ -8,6 +8,11 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 
 ## [2026-10-28]
 
+### Added
+- **src/wayfire_bridge/shipped_config.py, src/wayfire_bridge/bridge.py:** The launcher copies the shipped `wayfire.ini` only at the first login, so bindings a later build adds or renames never reached an existing config. When an update changes the shipped file, the bridge now saves it once as `wayfire.ini.new` beside the user's config and shows a notification through `org.freedesktop.Notifications`, sent once the notification server is up. A SHA-256 of the shipped file in `~/.local/state/budgie-wayfire/shipped-wayfire.ini.sha256` marks it as handled, so the copy isn't made again until a build ships a different one; a config that is still the shipped one gets no copy *(Claude, directed by user)*
+- **tests/test_new_config.py, tests/helpers.py:** No copy at a first login or without a config; a copy, made once, for a config from an older build, not brought back after deleting it, and made again when a later build changes the shipped file; the shipped file is found in `XDG_DATA_DIRS`. The other bridge tests skip the check, so they never read the installed config or write to `~/.local/state` *(Claude, directed by user)*
+- **README.md:** Explain `wayfire.ini.new` *(Claude, directed by user)*
+
 ### Changed
 - **src/systemd/wayfire-bridge.service, tests/test_shipped_config.py, README.md:** Use the bridge's new path, `/usr/lib/budgie-desktop/wayfire-bridge`, which the Arch layout commit missed; drop the README note that the default config's portal line does nothing on Arch, since it now starts `/usr/lib/xdg-desktop-portal` *(Claude, directed by user)*
 

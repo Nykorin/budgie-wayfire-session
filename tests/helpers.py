@@ -136,12 +136,14 @@ class BridgeTestCase(unittest.TestCase):
         shutil.copy(self.initial_ini, self.ini)
 
     def start_bridge(self):
-        original = bridge_module.ConfigManager
+        original = bridge_module.ConfigManager, bridge_module.check_shipped_config
         bridge_module.ConfigManager = lambda: ConfigManager(self.ini)
+        # The real one would read the installed config and write to ~/.local/state
+        bridge_module.check_shipped_config = lambda config_path: None
         try:
             bridge = bridge_module.WayfireBridge()
         finally:
-            bridge_module.ConfigManager = original
+            bridge_module.ConfigManager, bridge_module.check_shipped_config = original
         # What Wayfire would see 3 s after login
         bridge.release_startup_saves()
         return bridge

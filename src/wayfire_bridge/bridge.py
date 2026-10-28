@@ -32,6 +32,7 @@ from .transforms import (
     workspace_grid,
 )
 from .budgie_wm_actions import BudgieWMActionsHandler
+from .shipped_config import check_shipped_config, notify_new_config
 from .logging_config import get_logger
 
 log = get_logger(__name__)
@@ -96,6 +97,14 @@ class WayfireBridge:
 
         self.config_manager = ConfigManager()
         self.config_manager.hold_saves()
+
+        # A new build's default config is saved beside the user's, once
+        try:
+            new_config = check_shipped_config(self.config_manager.config_path)
+            if new_config:
+                notify_new_config(new_config)
+        except Exception:
+            log.exception("Could not check for a new shipped wayfire.ini")
         self.transforms = TransformFunctions()
         self.settings_objects: Dict[str, Gio.Settings] = {}
         self.dbus_system_bus = None
