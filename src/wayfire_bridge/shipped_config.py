@@ -26,6 +26,13 @@ log = get_logger(__name__)
 SHIPPED_CONFIG = Path('budgie-desktop') / 'wayfire' / 'wayfire.ini'
 MARKER_NAME = 'shipped-wayfire.ini.sha256'
 
+# budgie-daemon takes the notification name about a second into the session,
+# before it can show popups: a notification sent then only appears in Raven
+NOTIFY_DELAY_MS = 2000
+# Budgie keeps a popup up for 6 to 12 s whatever is asked (0, "never expire",
+# included); ask for the longest
+NOTIFY_TIMEOUT_MS = 12000
+
 
 def find_shipped_config():
     """The installed default wayfire.ini, from the XDG data directories."""
@@ -81,7 +88,7 @@ def check_shipped_config(config_path, shipped=None, state=None):
 
 
 def notify_new_config(new_path):
-    """Tell the user about new_path once the notification server is up."""
+    """Tell the user about new_path once the notification server is up and settled."""
     home = str(Path.home())
     shown_dir = str(new_path.parent)
     if shown_dir.startswith(home + os.sep):
@@ -89,6 +96,9 @@ def notify_new_config(new_path):
 
     def on_appeared(connection, name, owner):
         Gio.bus_unwatch_name(watch_id)
+        GLib.timeout_add(NOTIFY_DELAY_MS, send, connection)
+
+    def send(connection):
         connection.call(
             'org.freedesktop.Notifications', '/org/freedesktop/Notifications',
             'org.freedesktop.Notifications', 'Notify',
@@ -96,10 +106,11 @@ def notify_new_config(new_path):
                 'Budgie Wayfire', 0, 'dialog-information',
                 'New default Wayfire config',
                 f'{new_path.name} is in {shown_dir}/',
-                [], {}, -1,
+                [], {}, NOTIFY_TIMEOUT_MS,
             )),
             None, Gio.DBusCallFlags.NONE, -1, None, _finish_notify,
         )
+        return False
 
     watch_id = Gio.bus_watch_name(
         Gio.BusType.SESSION, 'org.freedesktop.Notifications',
