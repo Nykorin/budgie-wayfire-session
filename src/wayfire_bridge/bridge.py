@@ -21,7 +21,7 @@ except ImportError:
 
 from .config_manager import ConfigManager
 from .keybindings import CustomKeybindingsHandler
-from .media_keys import MediaKeysHandler, MEDIA_KEY_MAPPINGS, OLD_COMMAND_NAMES
+from .media_keys import MediaKeysHandler, MEDIA_KEY_MAPPINGS
 from .mappings import GSETTINGS_MAPPINGS
 from .transforms import (
     TransformFunctions,
@@ -900,10 +900,6 @@ class WayfireBridge:
             if command.startswith(('wm-actions ', 'vswitch-move ')):
                 self.config_manager.remove_option('command', f'binding_{name}')
                 self.config_manager.remove_option('command', f'command_{name}')
-        # Media key entries under the names older versions used
-        for name in OLD_COMMAND_NAMES:
-            for prefix in ('binding_', 'repeatable_binding_', 'command_'):
-                self.config_manager.remove_option('command', f'{prefix}{name}')
         # Old vswitch names: binding_win_* doesn't exist and binding_0 was an
         # off-by-one (workspaces are numbered from 1)
         if 'vswitch' in self.config_manager.config:

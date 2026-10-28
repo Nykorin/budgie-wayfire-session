@@ -168,24 +168,6 @@ MEDIA_KEY_MAPPINGS = {
     },
 }
 
-# command_name values older versions used, removed from existing configs
-OLD_COMMAND_NAMES = (
-    'launch_file_manager',
-    'lock_screen',
-    'on_volume_down',
-    'on_volume_mute',
-    'on_volume_up',
-    'on_mic_mute',
-    'on_play',
-    'on_pause',
-    'on_stop',
-    'on_next',
-    'on_previous',
-    'on_logout',
-    'on_keyboard_brightness_down',
-    'on_keyboard_brightness_up',
-)
-
 
 def binding_prefix(mapping: dict) -> str:
     """The [command] prefix for a mapping's key: repeatable ones repeat while held."""

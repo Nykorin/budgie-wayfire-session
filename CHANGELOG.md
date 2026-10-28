@@ -11,6 +11,9 @@ Each bullet starts with the file it touches; paths are relative to the repositor
 ### Changed
 - **src/systemd/wayfire-bridge.service, tests/test_shipped_config.py, README.md:** Use the bridge's new path, `/usr/lib/budgie-desktop/wayfire-bridge`, which the Arch layout commit missed; drop the README note that the default config's portal line does nothing on Arch, since it now starts `/usr/lib/xdg-desktop-portal` *(Claude, directed by user)*
 
+### Removed
+- **src/wayfire_bridge/media_keys.py, src/wayfire_bridge/bridge.py, tests/test_migrations.py:** The startup cleanup that deleted media key entries under the names older versions used (`OLD_COMMAND_NAMES`), and its test. It ran on every start for a one-time rename; new or renamed bindings now go into the mapping list and the shipped `wayfire.ini` instead of being converted in the user's config *(Claude, directed by user)*
+
 ## [2026-10-23]
 
 ### Added
